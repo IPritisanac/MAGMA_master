@@ -311,7 +311,7 @@ class Magma():
             if version=="py":
                 candidates_dict = MP.re_prioritize(best_results,candidates_dict)
             
-        self.write_out_gnu(tag)
+        #self.write_out_gnu(tag)
         
         if not bool(final_lists): # if final_lists dictionary is empty -- iterations did not lead to MCES -- error somewhere
             print 'No solutions found in any of the optimization runs! An error in settings or input data. Aborting.'
@@ -380,7 +380,7 @@ class Magma():
     def write_out_gnu(self,runtag):
         
         gnu=open(self.outdir+os.sep+'conv.gp','w')
-        gnu.write('set term post eps enh color solid\n')
+        #gnu.write('set term post eps enh color solid\n')
         gnu.write('set output \'%s\'\n' % (self.outdir+os.sep+'conv'+runtag+'.eps'))
         gnu.write('set size square\n')
         gnu.write('set cblabel \'priority iteration number\'\n')
