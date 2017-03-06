@@ -175,7 +175,7 @@ class Graph(GenericMethods):
         print 'total score (hungarian) =%d' % total
         return total,useful_indices    
     
-    def CombineMunkresCandidates(self,dictionary_total,dictionary_munkres,quantitative = False):
+    def combine_munkres_candidates(self,dictionary_total,dictionary_munkres,quantitative = False):
         #    for each atom list
         #    create dictionary of values
         #    sort in ascending order
@@ -600,7 +600,7 @@ class Graph(GenericMethods):
             pattern_dict.setdefault(nodes[i],pattern)
         return pattern_dict       
     
-    def Compare(self,nodes1,adjacency1,nodes2,adjacency2,comparison,quantitative=False):
+    def compare(self,nodes1,adjacency1,nodes2,adjacency2,comparison,quantitative=False):
         #    compares neihborhood similarities for vertices of graph1 and graph2
         candidates = {}
         pattern_dict1 = self.GetPatterns(nodes1,adjacency1)   
@@ -678,7 +678,7 @@ class Heuristic(Graph):
     # get neighboorhoods overlap
     # real value overlap assign to position in matrix
     # HungarianMaximize (matrix)   
-    def HungarianFirstOrder(self,noe_nodes,noe_adjacency,pdb_nodes,pdb_adjacency,compatibility_dict,hops=1):
+    def hungarian_first_order(self,noe_nodes,noe_adjacency,pdb_nodes,pdb_adjacency,compatibility_dict,hops=1):
         noe_dict = self.GetConnectionDictFromAdj(noe_nodes,noe_adjacency)
         pdb_dict = self.GetConnectionDictFromAdj(pdb_nodes,pdb_adjacency)
         types_noe = self.SortDictType(noe_dict)
@@ -735,7 +735,7 @@ class Heuristic(Graph):
     # @param ref - hash table of reduced assignment option for nmr data graph vertices
     # @retval - hash tabl that contains only reference assignment options for they keys in dic
     
-    def CraicD(self,dic,ref):
+    def update_dict(self,dic,ref):
         # IP - added the empty dictionary check
         if not bool(ref):   # in case of an emtpy reference -- return original dictionary
             return dic

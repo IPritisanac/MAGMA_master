@@ -81,16 +81,16 @@ class Magma():
             print e
             sys.exit(1)
         ###
-        positions,extended_info,info = PDB.ExtractPositionsIndices(P.pdb_flag)
-        dist_table_short,info_short,dist_matrix_short,mask_dist_short = PDB.InteractionNetwork(positions,info,P.short_distance_threshold,P.dist_matrix,P.indx_file)
-        dist_table_long,info_long,dist_matrix_long,mask_dist_long = PDB.InteractionNetwork(positions,info,P.long_distance_threshold,P.dist_matrix,P.indx_file)
+        positions,extended_info,info = PDB.extract_positions_indices(P.pdb_flag)
+        dist_table_short,info_short,dist_matrix_short,mask_dist_short = PDB.interaction_network(positions,info,P.short_distance_threshold,P.dist_matrix,P.indx_file)
+        dist_table_long,info_long,dist_matrix_long,mask_dist_long = PDB.interaction_network(positions,info,P.long_distance_threshold,P.dist_matrix,P.indx_file)
         
         pdb_dict_short = PDB.GetConnectionDict(dist_table_short,info_short,False)
         pdb_dict_long = PDB.GetConnectionDict(dist_table_long,info_long,False)
         
         if P.include_ligand:
             print "Adding ligand connections to the protein structure graph!"
-            lig_dist_table,lig_info,lig_dist_matrix,lig_dist_mask=PDB.LigandInteractionNetwork(positions,extended_info,P.ligand_distance_threshold)
+            lig_dist_table,lig_info,lig_dist_matrix,lig_dist_mask=PDB.ligand_interaction_network(positions,extended_info,P.ligand_distance_threshold)
         
         
         if P.merge_LV_label:
@@ -179,15 +179,15 @@ class Magma():
     # @retval a hash table with nmr graph vertices as keys and structure graph vertices (their assignment options) as values
     def set_assignment_options(self,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,Gp,strip_mode,filter_dict):
         
-        candidates_dict = Gp.Compare(noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,"Jaccard",False)
+        candidates_dict = Gp.compare(noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,"Jaccard",False)
         H = Heuristic() # create an instance of Heuristics
         # execute graph matching order heuristics based on the Jaccard coefficients for direct neighbourhoods and the Hungarian algorithm 
-        munkres_candidates = H.HungarianFirstOrder(noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,candidates_dict,1)
-        candidates_dict = Gp.CombineMunkresCandidates(candidates_dict,munkres_candidates,False) 
+        munkres_candidates = H.hungarian_first_order(noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,candidates_dict,1)
+        candidates_dict = Gp.combine_munkres_candidates(candidates_dict,munkres_candidates,False) 
         ##
         if strip_mode=='on' and len(filter_dict.keys())>0:   # execute only if the filter is non-empty
             print "Running with strip mode -- reducing assignment options to filter"
-            candidates_dict = H.CraicD(candidates_dict,filter)
+            candidates_dict = H.update_dict(candidates_dict,filter)
 
         return candidates_dict
     

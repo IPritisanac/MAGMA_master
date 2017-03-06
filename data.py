@@ -350,7 +350,7 @@ class PDBData(GenericMethods):
             #sys.exit()
         return M       
         
-    def ExtractPositionsIndices(self,flag):  
+    def extract_positions_indices(self,flag):  
         # extract positions and indices of labelled atoms from a pdb file        
         # in case we are not reading the information in from the pdb file - exit here, and read in the information from an external file in a different format
 
@@ -538,7 +538,7 @@ class PDBData(GenericMethods):
             pos_tmp.append(np.mean(pts[idx_subset],axis=0))
         return np.array(pos_tmp)
                 
-    def LigandInteractionNetwork(self,positions,info,lig_thresh):
+    def ligand_interaction_network(self,positions,info,lig_thresh):
         # if connections to ligand atoms are a part of the structure graph
         # do additional filtering of connections, based on the ligand specific threshold
         dist_mat=S.cdist(positions,positions)
@@ -593,7 +593,7 @@ class PDBData(GenericMethods):
         newtable=np.array(newdata)
         return newtable,info,dist_mat,masked_distances
     
-    def InteractionNetwork(self,positions,info,protein_thresh,posfile=None,indxfile=None):
+    def interaction_network(self,positions,info,protein_thresh,posfile=None,indxfile=None):
         #    compute a distance map
         #    ignore doubles (double edges)
         #    ignore self connection (loops)
@@ -708,7 +708,7 @@ class PDBData(GenericMethods):
         return conn_dict_pdb
     
     def GetConnectionDictDist(self,test_table,all_atoms):
-        # given the table of pairs (atoms connected through space within distance threshold >> see self.InteractionNetwork
+        # given the table of pairs (atoms connected through space within distance threshold >> see self.interaction_network
         # extract the pairs into dictionary where key is an atom and value is a list of atoms key is connected to
         # return connection dictionary in which for each connection, distance is specified as well
         conn_dict_pdb = {}
