@@ -57,7 +57,7 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
         if not bool(assigned):  # if the entering assigned dictionary is empty
             print "An empty assignment dictionary entered in RePrioritize assigned; returning the original dictionary of assignment options"
             return init_matchingoptions # return the original candidate matching options
-        elif len(assigned.keys()!=len(init_matchingoptions.keys())): # if the entering dictionary does not have an assignment option for all vertices
+        elif len(assigned.keys())!=len(init_matchingoptions.keys()): # if the entering dictionary does not have an assignment option for all vertices
             print "The assignment dictionary entering in RePrioritize does not match the original; returning the original dictionary of assignment options"
             return init_matchingoptions
         else:
@@ -117,12 +117,14 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
         # IP 04/03/2017
         # assumes that the input text file is located inside dir MAGMA/ 
         # assumes that bin is located at path/to/MAGMA/bin        
+	#cpath = ".."+os.sep+".."+os.sep+"src"+os.sep+"mcesCore"
         cpath = os.path.abspath("bin"+os.sep+"mcesCore") # get the absolute path to the bin directory and the core of the C code for the mces algorithm
         if(parflg==0):
-            runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init"+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(parflg) 
+	    
+            runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init "+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(parflg) 
             #runline='../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(parflg)
         else:
-            runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init"+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(0)
+            runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init "+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(0)
             #runline='mpiexec -np 2 ../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(parflg)
             #runline='../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(0)
 
@@ -135,7 +137,7 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
             
         #read in output file
         if(os.path.exists(self.outdir+os.sep+"core"+os.sep+"final.out")==1): #'/core/final.out')==1):
-            inny=open(self.outdir++os.sep+"core"+os.sep+"final.out")
+            inny=open(self.outdir+os.sep+"core"+os.sep+"final.out")
             final_assignments={}
             for line in inny.readlines():
                 test=line.split()
