@@ -252,12 +252,13 @@ class Graph(GenericMethods):
     def SplitConnectionsOverSubgraphs(self,nodes,adjacency,file_names = "splitted_connected_graph_"): 
         nx_graph = self.NetworkxGraph(nodes,adjacency)
         conn_subgraphs = self.NxGetComponentsAsSubgraphs(nx_graph)        
-        for g in range(len(conn_subgraphs)):
-            subgraph_file = open(file_names + str(g)+".txt","w")
-            for edge in conn_subgraphs[g].edges():
-                subgraph_file.write("%s\t%s\n"%(edge[0][-1]+edge[0][:-1]+"C-H",edge[1][-1]+edge[1][:-1]+"C-H"))
-                subgraph_file.write("%s\t%s\n"%(edge[1][-1]+edge[1][:-1]+"C-H",edge[0][-1]+edge[0][:-1]+"C-H"))
-            subgraph_file.close()
+        
+        #for g in range(len(conn_subgraphs)):
+        #    subgraph_file = open(file_names + str(g)+".txt","w")
+        #    for edge in conn_subgraphs[g].edges():
+        #        subgraph_file.write("%s\t%s\n"%(edge[0][-1]+edge[0][:-1]+"C-H",edge[1][-1]+edge[1][:-1]+"C-H"))
+        #        subgraph_file.write("%s\t%s\n"%(edge[1][-1]+edge[1][:-1]+"C-H",edge[0][-1]+edge[0][:-1]+"C-H"))
+        #    subgraph_file.close()
 
         return conn_subgraphs
     
@@ -323,8 +324,8 @@ class Graph(GenericMethods):
         labels={node:node for node in G.nodes()}
         labels = {}
         nx.draw_networkx_labels(G,pos,labels,font_size=8)
-        #plt.savefig(figname,format='eps', dpi=1000)
-        #plt.show() # display       
+        plt.savefig(figname,format='eps', dpi=300)
+        plt.show() # display       
    
     def GetCliquesNode(self,graph,node):
         all_cliques = list(nx.find_cliques(graph))
@@ -728,14 +729,24 @@ class Heuristic(Graph):
             merged_priorities.setdefault(key,final_priorities)
         return merged_priorities
     
-    # Andy's heuristic method >> 10th October 2016
-    #set candidate list to contain only those in dict
+    ## Andy's heuristic method >> 10th October 2016
+    ## set candidate list to contain only those in dict
+    # @param dic - hash table of assignment options nmr data graph vertices (keys); lists of assignment options (values)
+    # @param ref - hash table of reduced assignment option for nmr data graph vertices
+    # @retval - hash tabl that contains only reference assignment options for they keys in dic
+    
     def CraicD(self,dic,ref):
-        for key,pars in ref.items():
-            mask=np.in1d(dic[key],pars) # check if each element of reference dictionary (ref) is also element of input dictionary (dic)
-            # mask is a boolean array that will select only those elements of input that are in the reference
-            dic[key]=np.array(dic[key])[mask]
-        return dic # 03/03/2017 Iva -- added return value
+        # IP - added the empty dictionary check
+        if not bool(ref):   # in case of an emtpy reference -- return original dictionary
+            return dic
+                
+        else:      
+            for key,pars in ref.items():
+                mask=np.in1d(dic[key],pars) # check if each element of reference dictionary (ref) is also element of input dictionary (dic)
+                # mask is a boolean array that will select only those elements of input that are in the reference
+                dic[key]=np.array(dic[key])[mask]
+            return dic # 03/03/2017 Iva -- added return value
+      
     
     # @params
     # @retval        

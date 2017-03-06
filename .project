@@ -14,11 +14,4 @@
 	<natures>
 		<nature>org.python.pydev.pythonNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>magma_with_c</name>
-			<type>2</type>
-			<location>C:/Users/iva.pritisanac/Dropbox/dphil/projects/magma/code/magma_code_versions/magma_with_c</location>
-		</link>
-	</linkedResources>
 </projectDescription>

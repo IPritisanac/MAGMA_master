@@ -1,0 +1,33 @@
+#	PDB part
+pdb_file	input_files/ein/1EZA.pdb
+chains	A 
+residues ILE VAL LEU ALA
+short_distance_threshold	10
+long_distance_threshold	50           
+#	NOE part
+HMQC_list	input_files/ein/1EZA.pdb             
+format_peak_list	sparky                               
+labelled_residues	ILE VAL LEU ALA               
+read_NOEs_from_file	off
+NOE_list	input_files/ein/EIN_filtered_NOE_list.txt
+format_NOE_list	sparky
+dimensions_NOEs	4
+read_extracted_NOEs	on
+extracted_NOE_list	input_files/ein/confident_noes_ein.txt
+check_NOE_reciprocity	on	
+check_NOE_intensity	off
+#	Results/outputs               
+#	System dependent requirements
+run_subgraph_isomorphism	on
+priority_iterations	10
+N_priority_MCES	3
+output_file_McGregor	input_files/ein/mces-test.txt
+output_file_vf2	input_files/ein/vf2-test.txt
+merge_LV_label	off
+merge_NOEs	on
+merge_proRS on
+min_size	1
+mode	connected_subgraphs
+run_at	short
+mces_mode	all
+maximum_run_time	100

@@ -127,13 +127,8 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
             #runline='../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(0)
 
         sys.stdout.flush()
-        print runline
-        #sys.exit(0)
-        
-        """
-        UNCOMMENT - this does not work on windows!
-        """
-        #os.system(runline)
+
+        os.system(runline) # does not work on windows
         
         if(runSet==1):
             print runline
@@ -405,15 +400,28 @@ class MCES_PY(GenericMethods):
     This method bugs occassionally -- check
     """
     def re_prioritize(self,assigned,init_matchingoptions):
-
-        new_priorities = {}
-        for peak,atoms in init_matchingoptions.items():
-            old_prior = [a for a in atoms if a not in assigned[peak]]
-            new_prior = assigned[peak]+old_prior
-            new_priorities.setdefault(peak,new_prior)
-        #print "Reordered match order >> ",new_priorities
         
-        return new_priorities                   
+        if not bool(assigned):  # if the entering assigned dictionary is empty
+            print "An empty assignment dictionary entered in RePrioritize assigned; returning the original dictionary of assignment options"
+            return init_matchingoptions # return the original candidate matching options
+
+        elif len(assigned.keys())!=len(init_matchingoptions.keys()): # if the entering dictionary does not have an assignment option for all vertices
+            print "The assignment dictionary entering in RePrioritize does not match the original; returning the original dictionary of assignment options"
+            return init_matchingoptions
+        else:
+            try:
+                new_priorities = {}
+                for peak,atoms in init_matchingoptions.items():
+                    old_prior = [a for a in atoms if a not in assigned[peak]]
+                    new_prior = assigned[peak]+old_prior    # set the beginning of the list to the entering assigned values, append to the end the original values
+                    new_priorities.setdefault(peak,new_prior)
+                    #print "Reordered match order >> " #,new_priorities
+                #for key,value in new_priorities.items():
+                    #print key,':',value
+                return new_priorities
+            except ValueError:  # in case keys of the two dictionaries don't match
+                print "re_prioritize caught ValueError, returning the original dictionary of assignment options"
+                return init_matchingoptions                 
       
     def collect_best_assignments(self,current_solution):
         self.assignment_solutions.setdefault(self.edgesleft,{}) # sort assignments according to their score
@@ -422,7 +430,7 @@ class MCES_PY(GenericMethods):
             if self.rG2indices[value] not in self.assignment_solutions[self.edgesleft][self.rG1indices[key]]: # if this is a new assignment
                 self.assignment_solutions[self.edgesleft][self.rG1indices[key]].append(self.rG2indices[value])
     
-    def GetFinalAssignments(self):
+    def get_final_assignments(self):
         final_assignments = {}
         for score in sorted(self.assignment_solutions.keys(),reverse=True):
             for peak,atoms in self.assignment_solutions[score].items():
@@ -445,15 +453,7 @@ class MCES_PY(GenericMethods):
         mces_cnt = 0    # count how many MCES have been found        
         while True:             
             self.match_options()     # sets the lists self.untriedG2nodes and self.allowedG2nodes for possible matches to current node 
-            iter_cnt+=1	#	count an iteration of MCES algorithm       
-            #########
-            # Test terminating condition for distance thresholding
-            # if maximum number of iterations or maximum time is reached >> exit
-            # max time is set to 24 hours
-            #if thresh and int(time.time()-self.starttime) > 86400:
-            #if thresh and iter_cnt > len(self.g1_nodes)*1000 or int(time.time()-self.starttime) > 86400:
-            #print "N of iterations or time exceeded maximum ... exiting"
-            #sys.exit(100)
+            iter_cnt+=1	#	count an iteration of MCES algorithm
             #########
             if  len(self.allowedG2nodes)!=0:
                 self.matchednode = self.allowedG2nodes[0]   # take the first (best) option,from allowed nodes, pick the node from G2, which would be the best option for current G1 node                
@@ -467,56 +467,21 @@ class MCES_PY(GenericMethods):
                 self.edgesleft = np.sum(np.any(self.medges,axis=1))               
                 self.set_priorities()
                 self.store_priorities()  # store these priorities in the workspace of i + 1 node of G1                                
-                # in pseudocode -- > if there are untried! nodes in G2 to which node of G1 may(not matched to others already) correspond to, then Xi := one of these nodes, mark G2 as tried for i
+                ## if there are untried! nodes in G2 to which node of G1 may(not matched to others already) correspond to, then Xi := one of these nodes, mark G2 as tried for i
                 if self.edgesleft > self.bestedgesleft or (runall and self.edgesleft >= self.bestedgesleft):
-                    if self.G1node == self.g1_nodes.index(self.g1_nodes[-1]): # if we came to the end of the node list 
-                        print "found MCES of size >> ",self.edgesleft,"in iter >> ",iter_cnt
+                    if self.G1node == self.g1_nodes.index(self.g1_nodes[-1]): # if the algorithm reached the end of the vertex list 
+                        
+                        #print "found MCES of size >> ",self.edgesleft,"in iter >> ",iter_cnt
                         mces_cnt+=1  
                         current = copy.deepcopy(self.current_mapping)
                         self.collect_best_assignments(current)
                         self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
 
-                        # look up leftover assignment options 
-                        # commented out on 26/10/16 - Iva
-                        """
-                        nodeleft=np.setdiff1d(self.initial_node_matchingoptions[self.G1node],self.current_mapping.values())
-                        if len(nodeleft) > 0: # all of its assignment options
-                            #entering here means that there are "STILL SOME OPTIONS!",nodeleft
-                            currmap = copy.deepcopy(self.current_mapping)
-                            for n in nodeleft:
-                                currmap[self.G1node] = n
-                                endmedges = copy.deepcopy(self.storage[self.G1node-1][3])
-                                endedgesleft = copy.deepcopy(self.storage[self.G1node-1][4])
-                                mask1 = np.zeros_like(endmedges).astype(bool) 
-                                mask2 = np.ones_like(endmedges).astype(bool)
-                                edges1 = np.where(self.totG1edges == self.G1node)[0]    
-                                edges2 = np.where(self.totG2edges == n)[0]
-                                mask1[edges1]=True
-                                mask2[:,edges2]=False
-                                endmedges[np.logical_and(mask1,mask2)]=False
-                                endedgesleft = np.sum(np.any(endmedges,axis=1))
-                                if endedgesleft > self.bestedgesleft or (runall and endedgesleft >= self.bestedgesleft):
-                                    #print "found MCES of size >> ",endedgesleft,"in iter >> ",iter_cnt
-                                    mces_cnt+=1
-                                    self.bestedgesleft = endedgesleft
-                                    self.edgesleft = endedgesleft
-                                    #print endedgesleft," Found another MCES!"
-                                    self.collect_best_assignments(currmap)
-                                    self.output.write('%s\n'%(endedgesleft))
-                                    for key,value in currmap.items():
-                                        self.output.write('%s\t%s\n'%(self.rG1indices[key],self.rG2indices[value]))
-                                    self.output.write('\n')
-                                    self.output.flush()
-                                    elapsed=time.time()-self.starttime                                    
-                                    if (n_mces and mces_cnt >= n_mces) or (time_check and elapsed>maximum_time):
-                                        self.output.close()
-                                        final_assign_solutions = self.GetFinalAssignments()
-                                        return self.bestedgesleft,final_assign_solutions
-                                        """
-                        # indicates that MCS has been found --> this will influence the treeorder appending
+                        # routing for a look up of leftover assignment options for the final vertex removed from here [26/10/16] - Iva
+                        # indicate that MCS has been found --> this will influence the treeorder appending
                         #self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
                         timeittook = time.time() - self.starttime
-                        self.output.write('%s\n'%(timeittook))
+                        #self.output.write('%s\n'%(timeittook))
                         self.output.write('%s\n'%(self.edgesleft))
                                                
                         for key,value in self.current_mapping.items():                          
@@ -527,7 +492,7 @@ class MCES_PY(GenericMethods):
                         elapsed=time.time()-self.starttime                        
                         if (n_mces and mces_cnt >= n_mces) or (time_check and elapsed>maximum_time):
                             self.output.close()
-                            final_assign_solutions = self.GetFinalAssignments()
+                            final_assign_solutions = self.get_final_assignments()
                             return self.bestedgesleft,final_assign_solutions
                     else:  
                         self.store_medges_edgesleft()
@@ -538,8 +503,7 @@ class MCES_PY(GenericMethods):
                     self.medges = medges_tmp
             else:       
                 # if all matching options for current node have been tried
-                # move a node up in a tree search       
-                #print "backtracking", self.G1node        
+                # move a node up in a tree search              
                 if self.G1node in self.current_mapping.keys():
                     self.current_mapping.pop(self.G1node) 
                 self.G1node = self.G1node-1              
@@ -550,7 +514,8 @@ class MCES_PY(GenericMethods):
                 #print 'Edgesleft ', self.edgesleft
             # Iva - 20/12/2016 -- added the condition self.allowedG2nodes==0
             if (self.G1node==-1) and (self.allowedG2nodes==0):
+                print "found MCES of size >> ",self.edgesleft,"in iter >> ",iter_cnt
                 break
         self.output.close()
-        final_assign_solutions = self.GetFinalAssignments()
-        return self.bestedgesleft,final_assign_solutions                
+        final_assign_solutions = self.get_final_assignments()
+        return self.bestedgesleft,final_assign_solutions

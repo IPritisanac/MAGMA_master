@@ -35,7 +35,8 @@ class GenericMethods(object):
             new_adjacency.append(new_adj)
         return new_node_labels, new_adjacency              
         
-    def GetNodesAdjacency(self,contact_dict,lig_flag=False,merge_proRS=True):
+        
+    def GetNodesAdjacency(self,contact_dict,lig_flag=False,merge_proRS=True): #  lig_flag and merge_proRS -- not needed
         
         node_list = [key for key in contact_dict.keys()] #,key = lambda x:int(x[:-1]))]
         adjecancy = [list(set(contact_dict[node_list[n]])) for n in range(len(node_list))]

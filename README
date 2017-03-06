@@ -23,9 +23,9 @@ MAGMA main features:
 
 - for a successful operation of MAGMA, you need to have:
 		
+			GNU Compiler Collection (GCC)
 			python (version 2.7 or higher)
 		
-
   and the following python site-packages: 
 
 			numpy (__version__)
@@ -36,13 +36,17 @@ MAGMA main features:
 			
   installed on your system.
 
-- MAGMA is run from a command line as follows:
+- MAGMA c-version (faster) is run from a command line as follows:
 
-	$ python execute_magma.py /path/to/input/text/file
+	$ python execute_magma.py /path/to/input/text/file c
+
+- MAGMA python-version (slower) is run from a command line as follows:
+
+	$ python execute_magma.py /path/to/input/text/file py
 					
 - examples for the input text files are given in directory benchmark/
 
-last update of this document: 03.03.2017
+last update of this document: 06.03.2017
 
 ################
 # MAGMA OUTPUTS#
@@ -50,16 +54,19 @@ last update of this document: 03.03.2017
 
 MAGMA calculation will create a subdirectory called 'results' in the directory where 'input_protein_name.txt' file is located
 
-After a successful calculation using 'c' version of the program the directory 'results/' will contain:
+After a successful calculation the directory 'results/' will contain:
 								
-	. combinedResults.res	-	this is the FINAL assignment file (relevant to the user!)
+	. combined_result.res	-	this is the FINAL assignment file (relevant to the user!)
 							-	in the first column 1H-13C peak identifier is given
 							-	in the second and any nth column following ":" all residue assignment options for the peak are given
 							
-	. conv.2.1.out	-	text file monitoring details of the first step of MAGMA optimization prior to execution of complete MCES search
+The rest of the outputs contain details of certain steps of the overall MAGMA protocol: 
+(less relevant for the user, but useful in debugging and analysis of run progression)
+							
+	. conv.2.x.out	-	text file monitoring details of the first step of MAGMA optimization prior to execution of complete MCES search
 					-	for each step of iterative optimization (column 1) enumerate how many vertices (column 3) have scored a particular score (column 2)
 
-	. conv.1.1.out	-	text file monitoring progress of the second step of MAGMA optimization prior to execution of complete MCES search
+	. conv.1.x.out	-	text file monitoring progress of the second step of MAGMA optimization prior to execution of complete MCES search
 	 				-	for each step of iterative optimization (column 1) store the score of collected mces (column 2)
 	
 	. a subdirectory 'core/' with files:
@@ -69,19 +76,12 @@ After a successful calculation using 'c' version of the program the directory 'r
 														
 		. 'mcesCore.init' - this is the output of MAGMA's initial optimization that is used by the program (not relevant to the user)
 
-!	. a subdirectory 'run_details/' with files:
+	. files:
 		
 		. mces_n.txt	-	lists all mces solutions found by McGregor algorithm for the nth connected subgraph of the nmr data graph
-!		. mces_n.txt.B
-!		. mces_n.txt.G
+		. mces_n.txt.B
+		. mces_n.txt.G
 		. vf2_n.txt	-	consolidation of assignment through subgraph isomorphism, using VF2 algorithm, for the nth connected subgraph of the nmr data graph
-
-After a successful calculation using 'py' (i.e. python) version of the program the directory 'results/' will contain:
-
-	.
-	.
-	.
-	.
 
 ###########
 # CREDITS #
@@ -119,7 +119,7 @@ other contributions:
 ###############
 
 --------------
-03.03.2017
+06.03.2017
 --------------
 
 - IP: compiled this version on the basis of earlier MAGMA version (documented elsewhere)

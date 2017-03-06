@@ -18,7 +18,7 @@ extracted_NOE_list	input_files/nmr_data/hsp90_noes_marta_20160726.txt
 check_NOE_reciprocity	on	
 check_NOE_intensity	off
 # Optional - include measured NOEs to ligand
-include_ligand_noes	off
+include_ligand_noes	on
 protein_ligand_noe_file	input_files/nmr_data/hsp90_ligand_noes.txt             
 #	System dependent requirements
 run_subgraph_isomorphism	on
@@ -30,13 +30,13 @@ merge_LV_label	off
 merge_proRS off
 merge_NOEs	on
 min_size	1
-mode	all_subgraphs
+mode	connected_subgraphs
 maximum_run_time 100
 run_at	short
-mces_mode	all
+mces_mode	one
 strip_mode on
 #	Optional addition of edges from ligand to protein (to the structure graph)
-include_ligand	off
+include_ligand	on
 ligand_chain A
 ligand_name B2J
 ligand_atoms H11 H12 H13 H21 H22 H31 H32 H33
