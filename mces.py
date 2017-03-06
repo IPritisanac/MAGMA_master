@@ -1,45 +1,182 @@
-"""
-MAGMA engine (c) author: Iva Pritisanac | iva.pritisanac@gmail.com;
-
-definition and manipulation of graphs (protein structure graphs and NMR data graphs);
-heuristics for ordering of the graph matching search;
-munkres algorithm, variation of the Hungarian algorithm (call to the implementation given by the python package: munkres1.0.8 | https://pypi.python.org/pypi/munkres/);
-algorithm for subgraph isomorphism (call to the implementation given by the high performance graph library igraph http://igraph.org/python/);
+""" 
 algorithm for maximal common edge subgraph (implementation is based on theoretical work from James J. McGregor;1982 | https://pdfs.semanticscholar.org/ed10/c6f788922cd5e7cb26c3d55f676979958852.pdf);
 """
 
-import sys
 import copy,collections,time
 from generic import GenericMethods
-import igraph as ig
-import numpy as np
+import numpy as np          
+import os,sys
 
-#import os
-#import re
-#from molecule import Molecule
-#from myparser import Parser
-#import numpy.ma as ma
-#import scipy.spatial.distance as S
-#import pp
-#import matplotlib.pyplot as plt
-#import matplotlib as mpl
-#import matplotlib.cm as cm
-             
-class McGregor(GenericMethods):   
-    # inheritance from Generic Methods
-    # the class prepares the data structures for the MCES algorithm
-    # the class executed MCES algorithm
-    # the MCES algorithm implemented here is based on the theoretical work from McGregor J.J. 1982.
+class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C version of the algorithm on the basis of python class MCES_PY
 
     def __init__(self,G1_node_list): 
         
         self.G1nodes = G1_node_list    
-        # initialize data structures
-        self.storage = [[[] for p in range(0,5)] for i in range(len(self.G1nodes)+1)]    # single storage of MEDGES/MARCS (before refinement), nodes for which matching to current node of G1 was not yet tried
         
-        self.nodematch_initialpriority = [[] for node in self.G1nodes]
-        self.nodematch_priority_subset = [[] for node in self.G1nodes]  # this will be dynamically updated based on the current match
-        self.nodematch_all = [[] for node in self.G1nodes]
+    def PrepareMcGregor(self,G1_adjacency,G2_node_list,G2_adjacency,G2_long_node_list,G2_long_adjacency,matching_priority,outdir):
+        
+        self.outdir=outdir
+        # IP 03/03/2017 not necessary -- checked for by Magma class
+        #if(os.path.exists(self.outdir)==0):
+            #os.system('mkdir '+self.outdir)
+            
+        # IP 03/03/2017 -- adjusted to make system independent
+        if not os.path.exists(self.outdir+os.sep+"core"): # if the output results directory does not exist on this path
+            os.makedirs(self.outdir+os.sep+"core")   # create the directory
+        
+        outy=open(self.outdir+os.sep+"core"+os.sep+"mcesCore.init",'w') #self.outdir+'/core/mcesCore.init','w')
+        outy.write('G1_nodes\n')
+        for i in range(len(self.G1nodes)):
+            outy.write('%s :\t' % (self.G1nodes[i]))
+            for j in range(len(G1_adjacency[i])):
+                outy.write('%s\t' % (G1_adjacency[i][j]))
+            outy.write('\n')
+        outy.write('G2_nodes\n')
+        for i in range(len(G2_node_list)):
+            outy.write('%s :\t' % (G2_node_list[i]))
+            for j in range(len(G2_adjacency[i])):
+                outy.write('%s\t' % (G2_adjacency[i][j]))
+            outy.write('\n')
+        outy.write('MatchPriorities\n')
+        for i in range(len(self.G1nodes)):
+            outy.write('%s :\t' % (self.G1nodes[i]))
+            for j in range(len(matching_priority[self.G1nodes[i]])):
+                outy.write('%s\t' % (matching_priority[self.G1nodes[i]][j]))
+            outy.write('\n')
+        outy.close()
+
+        #for item,values in matching_priority.items():
+        #print item,':',values
+
+    ## create a new vertex matching priority list for every vertex in the dictionary on the basis of assigned
+    # @param assigned - updated hash table where every vertex (key) has with it associated list of assignment options (values)
+    # @param init_matchingoptions - original hash table where every vertex (key) has with it associated list of assignment options (values)
+    # @retval new_priorities - an updated hash table of assignment options; or in cases of errors in updating, the original init_matchingoptions 
+    def RePrioritize(self,assigned,init_matchingoptions):
+        
+        if not bool(assigned):  # if the entering assigned dictionary is empty
+            print "An empty assignment dictionary entered in RePrioritize assigned; returning the original dictionary of assignment options"
+            return init_matchingoptions # return the original candidate matching options
+        elif len(assigned.keys()!=len(init_matchingoptions.keys())): # if the entering dictionary does not have an assignment option for all vertices
+            print "The assignment dictionary entering in RePrioritize does not match the original; returning the original dictionary of assignment options"
+            return init_matchingoptions
+        else:
+            try:
+                new_priorities = {}
+                for peak,atoms in init_matchingoptions.items():
+                    old_prior = [a for a in atoms if a not in assigned[peak]]
+                    new_prior = assigned[peak]+old_prior    # set the beginning of the list to the entering assigned values, append to the end the original values
+                    new_priorities.setdefault(peak,new_prior)
+                    #print "Reordered match order >> " #,new_priorities
+                #for key,value in new_priorities.items():
+                    #print key,':',value
+                return new_priorities
+            except ValueError:  # in case keys of the two dictionaries don't match
+                print "RePrioritize caught ValueError, returning the original dictionary of assignment options"
+                return init_matchingoptions
+        
+        # AJB Oct 2016
+        #have seen a rare error here:
+        #have applied a terrible hack to fix it. 
+        #rather than debug, function will abort.                
+        #try:
+        #    new_priorities = {}
+        #    for peak,atoms in init_matchingoptions.items():
+        #        old_prior = [a for a in atoms if a not in assigned[peak]]
+        #        new_prior = assigned[peak]+old_prior
+        #        new_priorities.setdefault(peak,new_prior)
+        #    #print "Reordered match order >> " #,new_priorities
+        #    for key,value in new_priorities.items():
+        #        print key,':',value
+        #    return new_priorities                   
+        #except:
+        #    return init_matchingoptions
+
+    def McGregorLoop(self,outfile,runall=True,n_mces=None,time_check=False,maximum_time=None,thresh=True,parflg=0):
+            
+        try: #this is the number of mces-es to acquire. 0 means get all.
+            n_mcesSet=int(n_mces)
+        except:
+            n_mcesSet=0
+
+        if(runall==True): #save all above a threshold size or just the first?
+            runSet=1
+        else:
+            runSet=0
+            
+        if(outfile==False):
+            runOut=str(0)
+        else:
+            runOut=outfile
+            
+        try:
+            maxtimeSet=int(maximum_time)
+        except:
+            maxtimeSet=0
+
+        # IP 04/03/2017
+        # assumes that the input text file is located inside dir MAGMA/ 
+        # assumes that bin is located at path/to/MAGMA/bin        
+        cpath = os.path.abspath("bin"+os.sep+"mcesCore") # get the absolute path to the bin directory and the core of the C code for the mces algorithm
+        if(parflg==0):
+            runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init"+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(parflg) 
+            #runline='../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(parflg)
+        else:
+            runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init"+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(0)
+            #runline='mpiexec -np 2 ../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(parflg)
+            #runline='../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(0)
+
+        sys.stdout.flush()
+        print runline
+        #sys.exit(0)
+        
+        """
+        UNCOMMENT - this does not work on windows!
+        """
+        #os.system(runline)
+        
+        if(runSet==1):
+            print runline
+            
+        #read in output file
+        if(os.path.exists(self.outdir+os.sep+"core"+os.sep+"final.out")==1): #'/core/final.out')==1):
+            inny=open(self.outdir++os.sep+"core"+os.sep+"final.out")
+            final_assignments={}
+            for line in inny.readlines():
+                test=line.split()
+                if(len(test)==1):
+                    edgesleft=int(test[0])
+                else:
+                    key=test[0].split(':')[0]
+                    ass=[]
+                    for j in range(len(test)-1):
+                        ass.append(test[j+1])
+                    final_assignments[key]=ass
+            os.system('rm -rf '+self.outdir+'/core')
+            return edgesleft,final_assignments
+        else:
+            print 'No output'
+            return 0,{}
+        
+        #if(edgesleft==0):
+        #    print 'Problem: no score. Aborting'
+        #    sys.exit(1)             
+
+# inheritance from Generic Methods
+# the class prepares the data structures for the MCES algorithm
+# the class executed MCES algorithm
+# the MCES algorithm implemented here is based on the theoretical work from McGregor J.J. 1982.
+class MCES_PY(GenericMethods):   
+    
+    def __init__(self,g1_node_list): 
+        
+        self.g1_nodes = g1_node_list    
+        # initialize data structures
+        self.storage = [[[] for p in range(0,5)] for i in range(len(self.g1_nodes)+1)]    # single storage of MEDGES/MARCS (before refinement), nodes for which matching to current node of G1 was not yet tried
+        
+        self.nodematch_initialpriority = [[] for node in self.g1_nodes]
+        self.nodematch_priority_subset = [[] for node in self.g1_nodes]  # this will be dynamically updated based on the current match
+        self.nodematch_all = [[] for node in self.g1_nodes]
         self.allowedG2nodes = []
                 
         self.currentedges = []      # edges of the currently considered G1 nodes
@@ -55,40 +192,40 @@ class McGregor(GenericMethods):
         self.starttime = None
         self.assignment_solutions = {} 
            
-    def PrepareMcGregor(self,G1_adjacency,G2_node_list,G2_adjacency,G2_long_node_list,G2_long_adjacency,matching_priority):
+    def prepare_mces_py(self,G1_adjacency,G2_node_list,G2_adjacency,G2_long_node_list,G2_long_adjacency,matching_priority):
         # initiate data structures
         self.G2nodes = G2_node_list       
-        self.G1edges = self.EnumerateEdges(self.G1nodes,G1_adjacency)
+        self.G1edges = self.enumerate_edges(self.g1_nodes,G1_adjacency)
         self.edgesleft = len(self.G1edges.keys())
-        self.G2edges = self.EnumerateEdges(G2_node_list,G2_adjacency)
-        self.G2edges_long = self.EnumerateEdges(G2_long_node_list,G2_long_adjacency)
+        self.G2edges = self.enumerate_edges(G2_node_list,G2_adjacency)
+        self.G2edges_long = self.enumerate_edges(G2_long_node_list,G2_long_adjacency)
         empty_medges = np.zeros(shape=(len(self.G1edges.keys()),len(self.G2edges.keys()))).astype(bool)
         empty_medges_long = np.zeros(shape=(len(self.G1edges.keys()),len(self.G2edges.keys()))).astype(bool)
         
-        self.medges = self.CorrespondenceMatrix(self.G1edges,self.G2edges,empty_medges)
-        self.medges_long = self.CorrespondenceMatrix(self.G1edges,self.G2edges,empty_medges_long)
+        self.medges = self.correspondence_matrix(self.G1edges,self.G2edges,empty_medges)
+        self.medges_long = self.correspondence_matrix(self.G1edges,self.G2edges,empty_medges_long)
         
-        self.G1adjacency,self.G1indices = self.FillAdjecancyMatrix(self.G1nodes,G1_adjacency)
-        self.G2adjacency,self.G2indices = self.FillAdjecancyMatrix(G2_node_list,G2_adjacency)
-        self.initial_node_matchingoptions = self.SetIndexMatchPriorities(matching_priority) # initial priority dictionary can be obtained from anywhere -- this is based on the number of matching options from G2 to G1
-        self.rG1indices = self.ReverseDict(self.G1indices)
-        self.rG2indices = self.ReverseDict(self.G2indices)
+        self.G1adjacency,self.G1indices = self.fill_adjacency_matrix(self.g1_nodes,G1_adjacency)
+        self.G2adjacency,self.G2indices = self.fill_adjacency_matrix(G2_node_list,G2_adjacency)
+        self.initial_node_matchingoptions = self.set_index_match_priorities(matching_priority) # initial priority dictionary can be obtained from anywhere -- this is based on the number of matching options from G2 to G1
+        self.rG1indices = self.reverse_dict(self.G1indices)
+        self.rG2indices = self.reverse_dict(self.G2indices)
         
-        self.totG1edges = self.EdgesArrays(self.G1edges)
-        self.totG2edges = self.EdgesArrays(self.G2edges)
+        self.totG1edges = self.edges_array(self.G1edges)
+        self.totG2edges = self.edges_array(self.G2edges)
         
-    def EdgesArrays(self,edge_dict):
+    def edges_array(self,edge_dict):
         edges = np.ndarray(shape=(len(edge_dict.keys()),2),dtype=int)
         for key,value in edge_dict.items():
             edges[key][0] = value[0][0]
             edges[key][1] = value[0][1]
         return edges            
         
-    def ReverseDict(self,init_dict):
+    def reverse_dict(self,init_dict):
         # given dictionary with single key and value, returns reversed dictionary (single value: key)
         return {value:key for key,value in init_dict.items()}
                                
-    def FillAdjecancyMatrix(self,nodes,adjacency):
+    def fill_adjacency_matrix(self,nodes,adjacency):
         node_indexing = {}        
         adjacency_matrix = np.zeros(shape=(len(nodes),len(nodes))) 
         for node in range(len(nodes)):            # gets to node index
@@ -98,20 +235,20 @@ class McGregor(GenericMethods):
                 adjacency_matrix[node,neighbour_index] = 1
         return adjacency_matrix,node_indexing
     
-    def SetIndexMatchPriorities(self,match_prior):
+    def set_index_match_priorities(self,match_prior):
         node_match_options = {}        
         for G1,G2s in match_prior.items():
             G2indices = [self.G2indices[g] for g in G2s]
             node_match_options.setdefault(self.G1indices[G1],G2indices)
         return node_match_options
 
-    def EnumerateNodes(self,nodes):
+    def enumerate_nodes(self,nodes):
         enumerated_nodes = {}
         for n in range(len(nodes)):    #n starts from 0
             enumerated_nodes.setdefault(n,nodes[n])
         return enumerated_nodes
     
-    def EnumerateEdges(self,nodes,adjacency):
+    def enumerate_edges(self,nodes,adjacency):
         edges={}
         enumerated_edges = {}
         for i in range(len(adjacency)):
@@ -138,7 +275,10 @@ class McGregor(GenericMethods):
                 enumerated_edges.setdefault(cnte,(key,value))
         return enumerated_edges
     
-    def Neighbourhood(self,nodes,adjacency):
+    """
+    //not used//
+    """
+    def define_neighbourhood(self,nodes,adjacency):
         neighbourhood = {}
         for i in range(len(adjacency)):
             pattern=[]
@@ -152,7 +292,7 @@ class McGregor(GenericMethods):
                 neighbourhood.setdefault(nodes[i],tuple())
         return neighbourhood
     
-    def CorrespondenceMatrix(self,edges1,edges2,empty_matrix):
+    def correspondence_matrix(self,edges1,edges2,empty_matrix):
         pairs=[]
         for key1,value1 in edges1.items():
             for key2,value2 in edges2.items():    #values are sorted (i.e. edge (I,V)==(V,I) would be (I,V))
@@ -162,14 +302,14 @@ class McGregor(GenericMethods):
             empty_matrix[pair[0],pair[1]]=1             
         return empty_matrix
 
-    def GetEdges(self):
+    def get_edges(self):
         #    information from initial edges-matrix could be used, without the need to check types!
         #    emptied every time the function is called
         #    get all edges of G1 node
         self.currentedges = np.where(self.totG1edges == self.G1node)[0]       
         self.matchededges = np.where(self.totG2edges == self.matchednode)[0]        
         
-    def UpdateMEDGES(self):
+    def update_medges(self):
         
         mask1 = np.zeros_like(self.medges).astype(bool) 
         mask2 = np.ones_like(self.medges).astype(bool)
@@ -177,7 +317,7 @@ class McGregor(GenericMethods):
         mask2[:,self.matchededges]=False
         self.medges[np.logical_and(mask1,mask2)]=False
 
-    def SetPriorities(self):        
+    def set_priorities(self):        
         # based on the tentative mapping (self.G1 node >> self.matchednode), set priority lists for other nodes
         #for each node k of G, such that k > i and k is adjacent to node i do
         #priority subset [K] := priority subset [l] n {l :l is adjacent to j in G,).
@@ -187,7 +327,7 @@ class McGregor(GenericMethods):
         
         for k in adjacent_i:
             if k > self.G1node:
-                #for k in range(len(self.G1nodes)):  
+                #for k in range(len(self.g1_nodes)):  
                 #    if k > self.G1node and k in adjacent_i:   # if k is subsequent to current node in G1 in order in which nodes are matched
                                 
                 priority_subset = [l for l in adjacent_j if l not in self.current_mapping.values() and l in self.initial_node_matchingoptions[k]]     # and not yet assigned
@@ -195,37 +335,37 @@ class McGregor(GenericMethods):
                 a_multiset = collections.Counter(self.nodematch_priority_subset[k])
                 b_multiset = collections.Counter(priority_subset)
                 overlap = list((a_multiset & b_multiset).elements())       
-                self.nodematch_priority_subset[k] = self.ScoreAdjust(k,overlap)
+                self.nodematch_priority_subset[k] = self.score_adjust(k,overlap)
                                     
                 #self.nodematch_priority_subset[k] = bestoption                
                 
                 all_others = [node for node in self.nodematch_initialpriority[k] if node not in overlap]                    
-                self.nodematch_all[k] = self.ScoreAdjust(k,all_others) 
+                self.nodematch_all[k] = self.score_adjust(k,all_others) 
         
     ## This function stores priority matching
     # @retval        
-    def StorePriorities(self):      
+    def store_priorities(self):      
         storeindx = self.G1node + 1 
         self.storage[storeindx][0] = copy.deepcopy(self.nodematch_priority_subset)
         self.storage[storeindx][1] = copy.deepcopy(self.nodematch_all)
         
-    def StoreMedgesEdgesleft(self):
+    def store_medges_edgesleft(self):
         # when last node is reached forward storing cannot be done
         storeindx = self.G1node + 1
         self.storage[storeindx][3] = copy.deepcopy(self.medges)  # store initial medges/edgesleft to workspace connected with node 0
         self.storage[storeindx][4] = copy.deepcopy(self.edgesleft)  
 
-    def StoreInitial(self):
+    def store_initial(self):
         # important for when backtrack to starting node happens --> values before any assignment to node 0
         self.storage[0][0] = copy.deepcopy(self.nodematch_priority_subset)
         self.storage[0][1] = copy.deepcopy(self.nodematch_all)
         self.storage[0][3] = copy.deepcopy(self.medges) # store initial medges/edgesleft to workspace connected with node 0
         self.storage[0][4] = copy.deepcopy(self.edgesleft)
 
-    def StoreTried(self):
+    def store_tried(self):
         self.storage[self.G1node][2].append(copy.deepcopy(self.matchednode))   # mark node xi as tried for node i
               
-    def InitialG2PriorityMatchList(self):     
+    def initial_g2_priority_match_list(self):     
         #    set initial node order (order in which nodes of G1 will be picked)
         #    initial options for matching of nodes in G1 --> critical is that indexing is order same way as the treesearch (treesearch == G1 nodes)
         for n1,priority_list in self.initial_node_matchingoptions.items():
@@ -233,7 +373,7 @@ class McGregor(GenericMethods):
             self.nodematch_initialpriority[n1] = priority_list
             self.nodematch_all[n1] = priority_list
                                         
-    def MatchOptions(self):  
+    def match_options(self):  
         #    dynamically update possible matches considering current mapping and previously tried ones
         #    check the storage of currently tried match options ( in pseudocode (if there are any UNTRIED options to which G1 may correspond to))       
         #print self.G1node
@@ -243,15 +383,15 @@ class McGregor(GenericMethods):
         triedG2 = self.storage[self.G1node][2]   # all currently untried G2 options    
         
         allowedG2nodes = [node for node in priorityG2options if node not in self.current_mapping.values() and node not in triedG2]    # G2 nodes to which i of G1 may correspond to
-        bestoptions = self.ScoreAdjust(self.G1node,allowedG2nodes)
+        bestoptions = self.score_adjust(self.G1node,allowedG2nodes)
         self.allowedG2nodes = bestoptions
         
         if len(allowedG2nodes) == 0:
             allowedG2nodes = [node for node in otherG2options if node not in self.current_mapping.values() and node not in triedG2]    # G2 nodes to which i of G1 may correspond to       
-            bestoptions = self.ScoreAdjust(self.G1node,allowedG2nodes)
+            bestoptions = self.score_adjust(self.G1node,allowedG2nodes)
             self.allowedG2nodes = bestoptions
                      
-    def ScoreAdjust(self,G1node,options):
+    def score_adjust(self,G1node,options):
         sorted_options = []
         for G2node in options:
             indexG2 = self.nodematch_initialpriority[G1node].index(G2node)
@@ -261,17 +401,21 @@ class McGregor(GenericMethods):
         # print >>sorted_options
         return sorted_options
     
-    def RePrioritize(self,assigned,init_matchingoptions):
+    """
+    This method bugs occassionally -- check
+    """
+    def re_prioritize(self,assigned,init_matchingoptions):
 
         new_priorities = {}
         for peak,atoms in init_matchingoptions.items():
             old_prior = [a for a in atoms if a not in assigned[peak]]
             new_prior = assigned[peak]+old_prior
             new_priorities.setdefault(peak,new_prior)
-        print "Reordered match order >> ",new_priorities
+        #print "Reordered match order >> ",new_priorities
+        
         return new_priorities                   
       
-    def CollectBestAssignments(self,current_solution):
+    def collect_best_assignments(self,current_solution):
         self.assignment_solutions.setdefault(self.edgesleft,{}) # sort assignments according to their score
         for key,value in current_solution.items():
             self.assignment_solutions[self.edgesleft].setdefault(self.rG1indices[key],[])
@@ -288,47 +432,48 @@ class McGregor(GenericMethods):
                         final_assignments[peak].append(atom)
         return final_assignments   
       
-    def McGregorLoop(self,outfile,runall=True,n_mces=None,time_check=False,maximum_time=None,thresh=True):
-        self.InitialG2PriorityMatchList()   # set initial priority matching list              
+    def mcgregor_main(self,outfile,runall=True,n_mces=None,time_check=False,maximum_time=None,thresh=True):
+        
+        self.initial_g2_priority_match_list()   # set initial priority matching list              
         self.G1node = 0  #    index of start node in G1.nodes list
-        self.StoreInitial()
+        self.store_initial()
         #store initial priorities, MEDGES, EDGESLEFT (no refinements made) -- stored in the workspace of node 0 of G1 graph  
-        self.currentnode = self.G1nodes[self.G1node]     # start at the beginning of the list
+        self.currentnode = self.g1_nodes[self.G1node]     # start at the beginning of the list
         self.starttime = time.time()
         self.output = open(outfile,"w") # open the output file where resulting assignments will be stored
         iter_cnt = 0    # count how many exact MCES iterations performed
         mces_cnt = 0    # count how many MCES have been found        
         while True:             
-            self.MatchOptions()     # sets the lists self.untriedG2nodes and self.allowedG2nodes for possible matches to current node 
+            self.match_options()     # sets the lists self.untriedG2nodes and self.allowedG2nodes for possible matches to current node 
             iter_cnt+=1	#	count an iteration of MCES algorithm       
             #########
             # Test terminating condition for distance thresholding
             # if maximum number of iterations or maximum time is reached >> exit
             # max time is set to 24 hours
             #if thresh and int(time.time()-self.starttime) > 86400:
-            #if thresh and iter_cnt > len(self.G1nodes)*1000 or int(time.time()-self.starttime) > 86400:
+            #if thresh and iter_cnt > len(self.g1_nodes)*1000 or int(time.time()-self.starttime) > 86400:
             #print "N of iterations or time exceeded maximum ... exiting"
             #sys.exit(100)
             #########
             if  len(self.allowedG2nodes)!=0:
                 self.matchednode = self.allowedG2nodes[0]   # take the first (best) option,from allowed nodes, pick the node from G2, which would be the best option for current G1 node                
                 self.current_mapping[self.G1node] = self.matchednode   # keeps track of current mappings                
-                self.StoreTried()
-                self.GetEdges()   #    get to edges of current node in G1 and its matched node in G2
+                self.store_tried()
+                self.get_edges()   #    get to edges of current node in G1 and its matched node in G2
                 # before refinement of MEDGES on the basis of this correspondence, create temporary copy of MEDGES which will either be accepted or rejected
                 medges_tmp = copy.deepcopy(self.medges)
                 # REFINE MEDGES on the basis of this tentative correspondence
-                self.UpdateMEDGES()
+                self.update_medges()
                 self.edgesleft = np.sum(np.any(self.medges,axis=1))               
-                self.SetPriorities()
-                self.StorePriorities()  # store these priorities in the workspace of i + 1 node of G1                                
+                self.set_priorities()
+                self.store_priorities()  # store these priorities in the workspace of i + 1 node of G1                                
                 # in pseudocode -- > if there are untried! nodes in G2 to which node of G1 may(not matched to others already) correspond to, then Xi := one of these nodes, mark G2 as tried for i
                 if self.edgesleft > self.bestedgesleft or (runall and self.edgesleft >= self.bestedgesleft):
-                    if self.G1node == self.G1nodes.index(self.G1nodes[-1]): # if we came to the end of the node list 
+                    if self.G1node == self.g1_nodes.index(self.g1_nodes[-1]): # if we came to the end of the node list 
                         print "found MCES of size >> ",self.edgesleft,"in iter >> ",iter_cnt
                         mces_cnt+=1  
                         current = copy.deepcopy(self.current_mapping)
-                        self.CollectBestAssignments(current)
+                        self.collect_best_assignments(current)
                         self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
 
                         # look up leftover assignment options 
@@ -356,7 +501,7 @@ class McGregor(GenericMethods):
                                     self.bestedgesleft = endedgesleft
                                     self.edgesleft = endedgesleft
                                     #print endedgesleft," Found another MCES!"
-                                    self.CollectBestAssignments(currmap)
+                                    self.collect_best_assignments(currmap)
                                     self.output.write('%s\n'%(endedgesleft))
                                     for key,value in currmap.items():
                                         self.output.write('%s\t%s\n'%(self.rG1indices[key],self.rG2indices[value]))
@@ -378,14 +523,14 @@ class McGregor(GenericMethods):
                             self.output.write('%s\t%s\n'%(self.rG1indices[key],self.rG2indices[value]))
                         self.output.write('\n')
                         self.output.flush()
-                        self.StoreMedgesEdgesleft()
+                        self.store_medges_edgesleft()
                         elapsed=time.time()-self.starttime                        
                         if (n_mces and mces_cnt >= n_mces) or (time_check and elapsed>maximum_time):
                             self.output.close()
                             final_assign_solutions = self.GetFinalAssignments()
                             return self.bestedgesleft,final_assign_solutions
                     else:  
-                        self.StoreMedgesEdgesleft()
+                        self.store_medges_edgesleft()
                         self.G1node= self.G1node + 1
                         self.storage[self.G1node][2]=[] # mark all nodes as untried
                 else:

@@ -35,15 +35,26 @@ class GenericMethods(object):
             new_adjacency.append(new_adj)
         return new_node_labels, new_adjacency              
         
-    def GetNodesAdjacency(self,contact_dict,lig_flag=False):
-        if lig_flag:
-            # collect node list and adjacency for all non ligand atoms
-            node_list = [key for key in sorted(contact_dict.keys())]
-            adjecancy = [list(set(contact_dict[node_list[n]])) for n in range(len(node_list))]
-        else:
-            node_list = [key for key in sorted(contact_dict.keys(),key = lambda x:int(x[:-1]))]
+    def GetNodesAdjacency(self,contact_dict,lig_flag=False,merge_proRS=True):
+        
+        node_list = [key for key in contact_dict.keys()] #,key = lambda x:int(x[:-1]))]
+        adjecancy = [list(set(contact_dict[node_list[n]])) for n in range(len(node_list))]
+        
+        """
+        if merge_proRS:
+            node_list = [key for key in sorted(contact_dict.keys())] #,key = lambda x:int(x[:-1]))]
             adjecancy = [list(set(contact_dict[n])) for n in node_list]
-        return node_list,adjecancy     
+
+        if not merge_proRS or lig_flag:
+            node_list = [key for key in contact_dict.keys()] #,key = lambda x:int(x[:-1]))]
+            adjecancy = [list(set(contact_dict[node_list[n]])) for n in range(len(node_list))]
+
+        #if lig_flag:
+            # collect node list and adjacency for all non ligand atoms
+            #node_list = [key for key in sorted(contact_dict.keys())]
+            #adjecancy = [list(set(contact_dict[node_list[n]])) for n in range(len(node_list))]
+        """
+        return node_list,adjecancy   
     
     def GetUnsortedNodesAdjacency(self,contact_dict):
         node_list = [key for key in contact_dict.keys()]

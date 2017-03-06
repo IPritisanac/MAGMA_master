@@ -1,3 +1,12 @@
+"""
+__author__: Iva Pritisanac 
+
+definition and manipulation of graphs (protein structure graphs and NMR data graphs);
+heuristics for ordering of the graph matching search;
+munkres algorithm, variation of the Hungarian algorithm (call to the implementation given by the python package: munkres1.0.8 | https://pypi.python.org/pypi/munkres/);
+algorithm for subgraph isomorphism (call to the implementation given by the high performance graph library igraph http://igraph.org/python/);
+"""
+
 from generic import GenericMethods
 import networkx as nx
 import random
@@ -75,7 +84,8 @@ class Graph(GenericMethods):
         #print remove_nodes
         nodes_adj_dict = {node_list[n1]:set(adjacency_list[n1]) for n1 in range(len(node_list))}
         new_node_list = [node for node in node_list if node not in remove_nodes]        
-        new_adjacency = [list(nodes_adj_dict[node]) for node in new_node_list]        
+        new_adjacency = [list(nodes_adj_dict[node]) for node in new_node_list] 
+               
         return new_node_list,new_adjacency                   
     
     def CreateAssignmentMatrix(self,quantitative_candidates_dict):
@@ -194,7 +204,7 @@ class Graph(GenericMethods):
         else:
             for key,value in dictionary_total.items():
                 if key in dictionary_munkres.keys():
-                    print value
+                    #print value
                     if dictionary_munkres[key] in value:
                         indx = value.index(dictionary_munkres[key])
                         value.pop(indx) #remove the duplicate
@@ -660,7 +670,7 @@ class Heuristic(Graph):
     #methods in this class provide the most optimal ordering of the graph matching priorities -> from vertices of the data graph to the vertices of the structure (pdb) graph
     def __init__(self):
         super(Graph,self).__init__()
-    # @params
+    # @param
     # @retval        
     # for NOE/PDB nodes
     # given label compatibility
@@ -717,6 +727,15 @@ class Heuristic(Graph):
             final_priorities = value + value2
             merged_priorities.setdefault(key,final_priorities)
         return merged_priorities
+    
+    # Andy's heuristic method >> 10th October 2016
+    #set candidate list to contain only those in dict
+    def CraicD(self,dic,ref):
+        for key,pars in ref.items():
+            mask=np.in1d(dic[key],pars) # check if each element of reference dictionary (ref) is also element of input dictionary (dic)
+            # mask is a boolean array that will select only those elements of input that are in the reference
+            dic[key]=np.array(dic[key])[mask]
+        return dic # 03/03/2017 Iva -- added return value
     
     # @params
     # @retval        

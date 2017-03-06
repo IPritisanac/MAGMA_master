@@ -23,7 +23,7 @@ class ParseInput(Parser):
         self.add('short_distance_threshold','short_distance_threshold','float',10.00)
         self.add('long_distance_threshold','long_distance_threshold','float',15.00)
         self.add('distance_type','distance_type','str','carbon')
-        self.add("rescore_threshold","rescore_thresh","float",8.0)
+        #self.add("rescore_threshold","rescore_thresh","float",8.0)
         self.add("distance_matrix","dist_matrix","str","")
         self.add("index_file","indx_file","str","")
 
@@ -48,12 +48,17 @@ class ParseInput(Parser):
         self.add('output_file_vf2','outfile_vf2','str',"")               
         
         self.add('merge_NOEs','merge_NOEs','str',"")
+        self.add('merge_proRS','merge_proRS','str',"")
         self.add('merge_LV_label','merge_LV_label','str',"")
         self.add("maximum_run_time", "max_run_time","int","")
         self.add('min_size','min_size','int',3)
         self.add('mode','mode','str',"complete_subgraphs")
         self.add('run_at','run_at','str',"short")
         self.add("mces_mode","mces_mode","str","all")
+
+        #self.add("craicMode","craicMode","str","all")
+        #self.add("craicFile","craicFile","str","all")
+        self.add("strip_mode","strip_mode","str","on")
 
         self.add("include_ligand","include_ligand",'str',"off")
         self.add("ligand_chain","ligand_chain",'str',"")
@@ -65,7 +70,6 @@ class ParseInput(Parser):
         
         if self.pdb_flag == "":
             raise Exception("in input file decide if pdb file is used or not!\n In the line use_pdb_file put 'off' if the file should not be used or 'on' if it should be used")
-        
         elif self.pdb_flag == "off":
             self.pdb_flag = False
         elif self.pdb_flag == "on":
@@ -118,8 +122,8 @@ class ParseInput(Parser):
         if self.distance_type=="":
             raise Exception("Please define between which methyl atoms distance matrix should be computed: 'proton' or 'carbon'")
         
-        if self.rescore_thresh == "":
-            print "No rescore against different distance threshold chosen!"
+        #if self.rescore_thresh == "":
+            #print "No rescore against different distance threshold chosen!"
             #raise Exception("No rescore against different distance threshold chosen!")
         
         if self.short_distance_threshold > self.long_distance_threshold:
@@ -236,6 +240,13 @@ class ParseInput(Parser):
             self.merge_NOEs = False
         else:
             raise Exception("incorrect entry for 'merge_NOEs'; expected 'on' or 'off'; instead got %s"%self.merge_NOEs)
+        
+        if self.merge_proRS == "on":
+            self.merge_proRS = True
+        elif self.merge_proRS == "off":
+            self.merge_proRS = False
+        else:
+            raise Exception("incorrect entry for 'merge_proR_S'; expected 'on' or 'off'; instead got %s"%self.merge_proR_S)
                         
         if self.merge_LV_label == "on":
             self.merge_LV_label = True
@@ -250,6 +261,15 @@ class ParseInput(Parser):
         if self.mode not in ["all_subgraphs", "connected_subgraphs","residue_subgraphs"]:
             raise Exception("mode keyword should be all_subgraphs, connected_subgraphs or residue_subgraphs. Instead found: %s"%self.mode)
 
+        """
+        //SET proper defaults and checks for this//        
+        if self.strip_mode == "on":   # is set to on or a default applies
+            self.strip_mode = "on"
+        elif self.strip_mode == "off":
+            self.strip_mode = None
+        else:
+            raise Exception("incorrect entry for 'strip_mode'; expected 'on' or 'off', instead got %s"%(self.strip_mode))
+        """
         if self.run_at == "":
             raise Exception("distance threshold for the calculation must be defined!/n set 'run_at' to either 'short' or 'long'")
         
@@ -289,7 +309,7 @@ class ParseInput(Parser):
                                                               
 class PDBData(GenericMethods):
     
-    def __init__(self,input_file,input_chains,input_residues,dist_between,short_thresh,long_thresh,ligand=False,lig_chain=None,lig_name=None,lig_atoms=None):
+    def __init__(self,input_file,input_chains,input_residues,dist_between,short_thresh,long_thresh,merge_proRS=True,ligand=False,lig_chain=None,lig_name=None,lig_atoms=None):
         
         self.input_file = input_file
         self.input_chains = input_chains
@@ -297,6 +317,7 @@ class PDBData(GenericMethods):
         self.dist_between = dist_between
         self.short_thresh = short_thresh
         self.long_thresh = long_thresh
+        self.merge_proRS = merge_proRS
         
         self.ligand = ligand
         self.lig_chain = lig_chain
@@ -307,7 +328,6 @@ class PDBData(GenericMethods):
         # start empty data structures
         self.all_res_information = {}
         
-
     def CheckInputFiles(self):
         #   method checks that all required input files exist    
         pass
@@ -411,39 +431,67 @@ class PDBData(GenericMethods):
         if 'VAL' in self.input_residues: 
             #get average position, indices and information for valine atoms
             if self.dist_between == "carbon": 
-                idx_val=mol.atomselect(self.input_chains,"VAL","CA",use_resname=True, get_index=True)[1]
-                info_val=mol.properties['data'][idx_val,2:6]
-                print ">> merging ProR and ProS carbons to pseudoatom"
-                pos_val=self.GetAveragePos(mol,idx_val,["CG1","CG2"])
-                print ">> valine done!",pos_val.shape
-                self.all_res_information.setdefault('VAL',(pos_val,info_val))
+                if self.merge_proRS:
+                    idx_val=mol.atomselect(self.input_chains,"VAL","CA",use_resname=True, get_index=True)[1]
+                    info_val=mol.properties['data'][idx_val,2:6]
+                    print ">> merging ProR and ProS carbons to pseudoatom"
+                    pos_val=self.GetAveragePos(mol,idx_val,["CG1","CG2"])
+                    print ">> valine done!",pos_val.shape
+                    self.all_res_information.setdefault('VAL',(pos_val,info_val))
+                else:
+                    print "Treating each methyl group of Val separately"
+                    pos_val1,idx_val1=mol.atomselect(self.input_chains,"VAL","CG1",use_resname=True, get_index=True)
+                    pos_val2,idx_val2=mol.atomselect(self.input_chains,"VAL","CG2",use_resname=True, get_index=True)
+                    info_val1=mol.properties['data'][idx_val1,2:6]
+                    info_val2=mol.properties['data'][idx_val2,2:6]
+                    print ">> %s valine methyls found!"%np.concatenate((pos_val1,pos_val2)).shape[0] 
+                    print ">> valine done!"
+                    self.all_res_information.setdefault("VAL",(np.concatenate((pos_val1,pos_val2)),np.concatenate((info_val1,info_val2))))
                 
             if self.dist_between == "proton":
-                for patom in self.methyl_proton_atom_names["VAL"]:
-                    pos,idx = mol.atomselect(self.input_chains,"VAL",str(patom),use_resname=True,get_index=True)
-                    info = mol.properties['data'][idx,2:6]
-                    all_pos.extend(pos)
-                    all_info.extend(info)
-                print ">> valine done!", len(all_pos)
-        
+                if self.merge_proRS:
+                    for patom in self.methyl_proton_atom_names["VAL"]:
+                        pos,idx = mol.atomselect(self.input_chains,"VAL",str(patom),use_resname=True,get_index=True)
+                        info = mol.properties['data'][idx,2:6]
+                        all_pos.extend(pos)
+                        all_info.extend(info)
+                    print ">> valine done!", len(all_pos)
+                else:
+                    print "Currently unsupported combination of parameters: distance_type 'proton' and merge_proRS 'off'; Change one of the parameters"
+                    sys.exit(0)
+            
         if 'LEU' in self.input_residues:        
             #get average position, indices and information for leucine atoms
-            if self.dist_between == "carbon":             
-                idx_leu=mol.atomselect(self.input_chains,"LEU","CA",use_resname=True, get_index=True)[1]
-                info_leu=mol.properties['data'][idx_leu,2:6]
-                print ">> merging ProR and ProS carbons to pseudoatom"
-                pos_leu=self.GetAveragePos(mol,idx_leu,["CD1","CD2"])
-                print ">> leucine done!",pos_leu.shape
-                self.all_res_information.setdefault('LEU',(pos_leu,info_leu))
-                
+            if self.dist_between == "carbon":
+                if self.merge_proRS:
+                    print "Treating each methyl group of Leu separately"           
+                    idx_leu=mol.atomselect(self.input_chains,"LEU","CA",use_resname=True, get_index=True)[1]
+                    info_leu=mol.properties['data'][idx_leu,2:6]
+                    print ">> merging ProR and ProS carbons to pseudoatom"
+                    pos_leu=self.GetAveragePos(mol,idx_leu,["CD1","CD2"])
+                    print ">> leucine done!",pos_leu.shape
+                    self.all_res_information.setdefault('LEU',(pos_leu,info_leu))
+                else:
+                    pos_leu1,idx_leu1=mol.atomselect(self.input_chains,"LEU","CD1",use_resname=True, get_index=True)
+                    pos_leu2,idx_leu2=mol.atomselect(self.input_chains,"LEU","CD2",use_resname=True, get_index=True)
+                    info_leu1=mol.properties['data'][idx_leu1,2:6]
+                    info_leu2=mol.properties['data'][idx_leu2,2:6]
+                    print ">> %s leucine methyls found!"%np.concatenate((pos_leu1,pos_leu2)).shape[0]
+                    print ">> leucine done!"        
+                    self.all_res_information.setdefault("LEU",(np.concatenate((pos_leu1,pos_leu2)),np.concatenate((info_leu1,info_leu2))))
+
             if self.dist_between == "proton":
-                for patom in self.methyl_proton_atom_names["LEU"]:
-                    pos,idx = mol.atomselect(self.input_chains,"LEU",str(patom),use_resname=True,get_index=True)
-                    info = mol.properties['data'][idx,2:6]
-                    all_pos.extend(pos)
-                    all_info.extend(info)
-                print ">> leucine done!", len(all_pos)
-                
+                if self.merge_proRS:
+                    for patom in self.methyl_proton_atom_names["LEU"]:
+                        pos,idx = mol.atomselect(self.input_chains,"LEU",str(patom),use_resname=True,get_index=True)
+                        info = mol.properties['data'][idx,2:6]
+                        all_pos.extend(pos)
+                        all_info.extend(info)
+                    print ">> leucine done!", len(all_pos)
+                else:
+                    print "Currently unsupported combination of parameters: distance_type 'proton' and merge_proRS 'off'; Change one of the parameters"
+                    sys.exit(0)
+                                    
         if (self.dist_between == "carbon") and (len(self.all_res_information.keys()) == 0):
             print "No residues selected!"
             print "Check input of residues (>> PDB part of the input file)"
@@ -658,7 +706,6 @@ class PDBData(GenericMethods):
                 conn_dict_pdb[a] = []
                 
         return conn_dict_pdb
-        
     
     def GetConnectionDictDist(self,test_table,all_atoms):
         # given the table of pairs (atoms connected through space within distance threshold >> see self.InteractionNetwork
@@ -795,11 +842,11 @@ class NMRData(GenericMethods):
         
     def SetGivenInput(self):
         
-        if self.input_peak_list:
-            self.ReadPeakList()
+        #if self.input_peak_list:
+            #self.ReadPeakList()
             
-        else:
-            print "No input peak list, simulated NOEs ... ?"        
+        #else:
+            #print "No input peak list, simulated NOEs ... ?"        
         
         if self.input_noe:
             print "Reading from the NOE input file"
@@ -859,7 +906,10 @@ class NMRData(GenericMethods):
     def ReadLigandNOEs(self):
         # read in 2 column file containing inter-molecular NOEs between protein and ligand
         # collect ligand noes to a dictionary
-        fin = open(self.ligand_noe_file,"r")
+        try:
+            fin = open(self.ligand_noe_file,"r")
+        except:
+            raise Exception('ERROR: file %s not found!'%self.ligand_noe_file)            
         lig_noes = {}
         for line in fin:
             stripped = line.strip()
