@@ -9,7 +9,7 @@ from magma_class import Magma
 from graph_heuristics import Graph
 
 # import the user input file with parameters for the calculation
-"""
+
 try:
     filename = sys.argv[1]
 except:
@@ -27,10 +27,10 @@ else:
     print "ERROR in the input MAGMA version"
     print "Set to the default: c version"
     magma_version="c"
-"""
+
    
-magma_version="py"
-filename = "input_files/hsp90/input_hsp90.txt"
+#magma_version="py"
+#filename = "input_files/hsp90/input_hsp90.txt"
     
 M = Magma(filename) # make an instance of Magma class
 run_mode,minsize,mcesmode,stripmode,niter,nitermces,runtime,check_isomorphism = M.parse_variables(filename) # run parser to get variables
