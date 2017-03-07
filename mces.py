@@ -417,6 +417,7 @@ class MCES_PY(GenericMethods):   # IP python version
                 return init_matchingoptions                 
       
     def collect_best_assignments(self,current_solution):
+        #print current_solution
         self.assignment_solutions.setdefault(self.edgesleft,{}) # sort assignments according to their score
         for key,value in current_solution.items():
             self.assignment_solutions[self.edgesleft].setdefault(self.rG1indices[key],[])
@@ -467,10 +468,12 @@ class MCES_PY(GenericMethods):   # IP python version
                         #print "found MCES of size >> ",self.edgesleft,"in iter >> ",iter_cnt
                         mces_cnt+=1  
                         current = copy.deepcopy(self.current_mapping)
+                        #print current
                         self.collect_best_assignments(current)
+                        #print self.edgesleft
                         self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
 
-                        # routing for a look up of leftover assignment options for the final vertex removed from here [26/10/16] - Iva
+                        # routine for a look up of leftover assignment options for the final vertex removed from here [26/10/16] - Iva
                         # indicate that MCS has been found --> this will influence the treeorder appending
                         #self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
                         timeittook = time.time() - self.starttime
@@ -482,12 +485,15 @@ class MCES_PY(GenericMethods):   # IP python version
                         self.output.write('\n')
                         self.output.flush()
                         self.store_medges_edgesleft()
-                        elapsed=time.time()-self.starttime                        
+                        elapsed=time.time()-self.starttime            
+                        #print "test1", self.G1node       
                         if (n_mces and mces_cnt >= n_mces) or (time_check and elapsed>maximum_time):
+                            #print "test2"
                             self.output.close()
                             final_assign_solutions = self.get_final_assignments()
                             return self.bestedgesleft,final_assign_solutions
                     else:  
+                        
                         self.store_medges_edgesleft()
                         self.G1node= self.G1node + 1
                         self.storage[self.G1node][2]=[] # mark all nodes as untried
@@ -505,9 +511,9 @@ class MCES_PY(GenericMethods):   # IP python version
                 self.nodematch_all = copy.deepcopy(self.storage[self.G1node][1])
                 self.nodematch_priority_subset = copy.deepcopy(self.storage[self.G1node][0])
                 #print 'Edgesleft ', self.edgesleft
-            # Iva - 20/12/2016 -- added the condition self.allowedG2nodes==0
-            if (self.G1node==-1) and (self.allowedG2nodes==0):
-                print "found MCES of size >> ",self.edgesleft,"in iter >> ",iter_cnt
+            # Iva - 20/12/2016 -- added the condition len(self.allowedG2nodes)==0
+            if (self.G1node==-1) and (len(self.allowedG2nodes)==0):
+                print "found final MCES of size >> ",self.edgesleft," in iter >> ",iter_cnt
                 break
         self.output.close()
         final_assign_solutions = self.get_final_assignments()

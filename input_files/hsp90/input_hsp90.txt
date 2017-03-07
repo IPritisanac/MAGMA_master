@@ -1,5 +1,5 @@
 #	PDB part
-pdb_file	input_files/pdbs/3b24_A_ligA_h.pdb
+pdb_file	input_files/hsp90/pdbs/3b24_A_ligA_h.pdb
 chains	A
 residues ILE VAL LEU 
 distance_type	carbon
@@ -8,14 +8,14 @@ long_distance_threshold	15        # currently not supported
 #	NOE part                              
 labelled_residues	ILE VAL LEU
 read_extracted_NOEs	on
-extracted_NOE_list	input_files/nmr_data/hsp90_noes_marta_20160726.txt
+extracted_NOE_list	input_files/hsp90/nmr_data/hsp90_noes_marta_20160726.txt
 check_NOE_reciprocity	on	
 # Optional - include measured NOEs to ligand
 include_ligand_noes	on
-protein_ligand_noe_file	input_files/nmr_data/hsp90_ligand_noes.txt             
+protein_ligand_noe_file	input_files/hsp90//nmr_data/hsp90_ligand_noes.txt             
 #	System dependent requirements
 run_subgraph_isomorphism	on
-priority_iterations	10
+priority_iterations	50
 N_priority_MCES	3
 merge_LV_label	off
 merge_proRS off
@@ -23,7 +23,7 @@ merge_NOEs	on
 min_size	1
 mode	connected_subgraphs
 maximum_run_time 100
-mces_mode	one
+mces_mode	all
 strip_mode on
 #	Optional addition of edges from ligand to protein (to the structure graph)
 include_ligand	on
