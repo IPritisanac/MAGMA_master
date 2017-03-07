@@ -229,10 +229,14 @@ class Graph(GenericMethods):
         return munkres_candidates    
         
     def classify_components(self,subgraphs):
-        subgraphs_dict = {}    
-        for s in range(len(subgraphs)):
-            #print subgraphs[s].nodes()
-            subgraphs_dict.setdefault(len(subgraphs[s].nodes()),[]).append(subgraphs[s])
+        
+        subgraphs_dict = {}            
+        #for s in range(len(subgraphs)):
+        for subgraph in subgraphs:
+            subgraphs_dict.setdefault(len(subgraph.nodes()),[]).append(subgraph)
+            #subgraphs_dict.setdefault(len(subgraphs[s].nodes()),[]).append(subgraphs[s])
+        print subgraphs_dict
+        sys.exit()
         return subgraphs_dict   
                                         
     def networkx_graph(self,node_list,adjacency_list):        
