@@ -159,7 +159,7 @@ class Magma():
         start_vf2 = time.time() # measure how long it takes for subgraph isomorphism to be evaluated
         if EP.igraph_subisomorphism(graph_noe,graph_structure):
             n_solutions = EP.igraph_count_subisomorphism(graph_noe,graph_structure)
-            print n_solutions
+            print "Found >> ", n_solutions, "SI solutions!"
             all_results = EP.igraph_list_subisomorphism(graph_noe,graph_structure,graph_noe_indexing,graph_structure_indexing,[],[],noe_vertices,[],structure_vertices,[],[],False)
             labels_result_dict=EP.igraph_subisomorphism_write_result(self.outdir+os.sep+"vf2",str(tag),all_results,graph_noe_indexing,graph_structure_indexing)
             #print "SI condition met for the entire NOE graph!\nN (explained NOEs) = ",len(small_graph.edges())
@@ -177,12 +177,13 @@ class Magma():
     # @param strip_mode a heuristic mode that allows reducing vertex assignment possibilities to predefined 'filter' hash table
     # @filter a hash table - if used it will reduce candidates_dict i.e. vertex assignment options to the values encountered in the filter; by default set to empty 
     # @retval a hash table with nmr graph vertices as keys and structure graph vertices (their assignment options) as values
-    def set_assignment_options(self,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,Gp,strip_mode,filter_dict):
+    def set_assignment_options(self,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,Gp,strip_mode,tag,filter_dict):
         
         candidates_dict = Gp.compare(noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,"Jaccard",False)
         H = Heuristic() # create an instance of Heuristics
         # execute graph matching order heuristics based on the Jaccard coefficients for direct neighbourhoods and the Hungarian algorithm 
-        munkres_candidates = H.hungarian_first_order(noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,candidates_dict,1)
+        hungarian_output = self.outdir+os.sep+"hungarian_assignment"+str(tag)+".out"
+        munkres_candidates = H.hungarian_first_order(noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,candidates_dict,hungarian_output,1)
         candidates_dict = Gp.combine_munkres_candidates(candidates_dict,munkres_candidates,False) 
         ##
         if strip_mode=='on' and len(filter_dict.keys())>0:   # execute only if the filter is non-empty

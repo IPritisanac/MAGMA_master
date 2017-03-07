@@ -56,7 +56,7 @@ class Graph(GenericMethods):
         
         return new_node_list,new_adjecancy
     
-    def ReverseDictionary(self,dictionary):
+    def reverse_dictionary(self,dictionary):
         if len(dictionary.keys()) == len(dictionary.values()):
             new_dictionary = {value:key for key,value in dictionary.items()}
             return new_dictionary
@@ -91,41 +91,8 @@ class Graph(GenericMethods):
         
         return new_node_list,new_adjacency                   
     
-    def CreateAssignmentMatrix(self,quantitative_candidates_dict):
-        
-        N_keys = len(quantitative_candidates_dict.keys())
-        sorted_keys = sorted(quantitative_candidates_dict.keys(),key = lambda x:int(x[:-1]))
-        unique_values = set([v[0] for val in quantitative_candidates_dict.values() for v in val])
-        N_values = len(unique_values)
-        sorted_values = sorted(unique_values,key = lambda x:int(x[:-1]))
-       
-        assign_matrix = np.zeros(shape=(N_keys,N_values))
-        
-        keys_indices = {sorted_keys[k]:k for k in range(len(sorted_keys))}
-        values_indices = {sorted_values[k]:k for k in range(len(sorted_values))}
-
-        for key,value in quantitative_candidates_dict.items():
-            for v in value:
-                assign_matrix[keys_indices[key],values_indices[v[0]]] = int(v[1]*100)
-        return assign_matrix,keys_indices,values_indices
     
-    def CreateBinaryAssignmentMatrix(self,candidates_dict):
-        
-        N_keys = len(candidates_dict.keys())
-        sorted_keys = sorted(candidates_dict.keys(),key = lambda x:int(x[:-1]))
-        unique_values = set([v for val in candidates_dict.values() for v in val])
-        N_values = len(unique_values)
-        sorted_values = sorted(unique_values,key = lambda x:int(x[:-1]))
-        assign_matrix = np.ones(shape=(N_keys,N_values))
-        keys_indices = {sorted_keys[k]:k for k in range(len(sorted_keys))}
-        values_indices = {sorted_values[k]:k for k in range(len(sorted_values))}
-
-        for key,value in candidates_dict.items():
-            for v in value:
-                assign_matrix[keys_indices[key],values_indices[v]] = 0
-        return assign_matrix,keys_indices,values_indices
-    
-    def CreateRealValueAssignmentMatrix(self,candidates_dict):
+    def create_real_val_assign_matrix(self,candidates_dict):
         N_keys = len(candidates_dict.keys())
         #sorted_keys = sorted(candidates_dict.keys(),key = lambda x:int(x[:-1]))
         sorted_keys = sorted(candidates_dict.keys()) #,key = lambda x:int(x[:-1]))
@@ -140,28 +107,8 @@ class Graph(GenericMethods):
             for v in value:
                 assign_matrix[keys_indices[key],values_indices[v[0]]] = v[1]
         return assign_matrix,keys_indices,values_indices
-        
-    def MunkresMinimizeAssignment(self,matrix):
-        m = Munkres()
-        m = Munkres()
-        
-        indexes = m.compute(matrix)
-        #print_matrix(matrix, msg='Lowest cost through this matrix:')
-        useful_indices = []
-        total = 0
-        cnt = 0
-        for row, column in indexes:
-            value = matrix[row][column]
-            if value == 0:
-                cnt+=1
-            total += value
-            print '(%d, %d) -> %f' % (row, column, value)
-            useful_indices.append(((row, column)))
-        print 'minimal assignment cost: %d' % total
-        print "total assigned = ", cnt
-        return total,indexes
-        
-    def MunkresMaximiseAssignment(self,matrix):
+                
+    def munkres_maximise_assignment(self,matrix):
     # call to Munkres algorithm (a variant of the Hungarian algorithm)
     # maximise "profit" along rows of a matrix
         cost_matrix = munkres.make_cost_matrix(matrix,lambda cost: sys.maxint - cost)
@@ -216,22 +163,24 @@ class Graph(GenericMethods):
 
             return dictionary_total
     
-    def MunkresBasedCandidates(self,indices,candidates_matrix,indices_rows,indices_columns):
+    def munkres_based_candidates(self,indices,candidates_matrix,indices_rows,indices_columns):
+        
+        
         munkres_candidates = {}
-        reverse_rows = self.ReverseDictionary(indices_rows)
-        reverse_columns = self.ReverseDictionary(indices_columns)
+        reverse_rows = self.reverse_dictionary(indices_rows)
+        reverse_columns = self.reverse_dictionary(indices_columns)
         
         for index in indices:
             indx_row = index[0]
             indx_column = index[1]
             print reverse_rows[indx_row],">>",reverse_columns[indx_column]
             munkres_candidates.setdefault(reverse_rows[indx_row],reverse_columns[indx_column])
+         
         return munkres_candidates    
         
     def classify_components(self,subgraphs):
         
         subgraphs_dict = {}            
-        
         #for s in range(len(subgraphs)):
         for subgraph in subgraphs:
             subgraphs_dict.setdefault(len(subgraph.nodes()),[]).append(subgraph)
@@ -247,17 +196,14 @@ class Graph(GenericMethods):
         graph.add_edges_from(graph_edges)   # will exclude any unconnected node (orphan) from graph nodes
         return graph
     
-    def NxGetComponents(self,graph):
-        connected_components = nx.connected_components(graph)
-        return connected_components
     
-    def NxGetComponentsAsSubgraphs(self,graph):
+    def nx_get_components_as_subgraphs(self,graph):
         connected_subgraphs = nx.connected_component_subgraphs(graph)
         return connected_subgraphs
 
     def split_connections_over_subgraphs(self,nodes,adjacency,file_names = "splitted_connected_graph_"): 
         nx_graph = self.networkx_graph(nodes,adjacency)
-        conn_subgraphs = self.NxGetComponentsAsSubgraphs(nx_graph)        
+        conn_subgraphs = self.nx_get_components_as_subgraphs(nx_graph)        
         
         #for g in range(len(conn_subgraphs)):
         #    subgraph_file = open(file_names + str(g)+".txt","w")
@@ -268,7 +214,7 @@ class Graph(GenericMethods):
 
         return conn_subgraphs
     
-    def PlotGraphLabels(self,G,figname):
+    def plot_graph_labels(self,G,figname):
         import matplotlib.pyplot as plt
         plt.figure()
         pos=nx.spring_layout(G) # positions for all nodes
@@ -331,20 +277,8 @@ class Graph(GenericMethods):
         labels = {}
         nx.draw_networkx_labels(G,pos,labels,font_size=8)
         plt.savefig(figname,format='eps', dpi=300)
-        plt.show() # display       
-   
-    def GetCliquesNode(self,graph,node):
-        all_cliques = list(nx.find_cliques(graph))
-        selected_cliques = [clique for clique in all_cliques if node in clique]
-        return selected_cliques    
-    
-    def GetNodesInCliques(self,clique_list,nodes_list):
-        for clique in sorted(clique_list,key=len,reverse = True):   # start from largest clique
-            #if len(clique) >= 2: # exclude trivial cliques
-            extension = [n for n in clique if n not in nodes_list]
-            nodes_list.extend(extension)
-        return nodes_list
-   
+        #plt.show() # display       
+      
     def igraph_graph(self,nodes,adjacency):
               
         if self.label_flag == "type":
@@ -381,39 +315,8 @@ class Graph(GenericMethods):
             for key in igraph_labels.keys():
                 graph.vs[key]["color"] = igraph_labels[key]
         return graph,igraph_indices
-    
-    def IgraphFilteringGraph(self,nodes,adjacency,root_node):
-        # root node is the one for which isomorphism is checked for
-        # exclude the root node from the analysis
-        root_label = len(self.labels) + 1
-        root_index = nodes.index(root_node)
-        
-        igraph_edges = [(i,nodes.index(e)) for i in range(len(nodes)) for e in adjacency[i]]
-        igraph_vertices = [i for i in range(len(nodes))] # do not include the root node in the analysis
-        igraph_labels = {i:self.igraph_color_codes[nodes[i][-1]] for i in range(len(nodes))}
-        igraph_indices = {i:nodes[i] for i in range(len(nodes))}
-
-        igraph_labels[root_index] = root_label  # reset the label for the root to ensure root to root mapping for comparison        
-        #    Get igraph object for the first graph - NOE graph
-        graph = ig.Graph()                 #    create igraph object
-        graph.add_vertices(igraph_vertices)
-        graph.add_edges(igraph_edges)
-        graph.simplify(multiple = True)    #    remove double edges if there are any
-        for key in igraph_labels.keys():
-            graph.vs[key]["color"] = igraph_labels[key]
-        return graph,igraph_indices
-    
-    def ExtractSubgraphAllowedNodes(self,nodes,adjacency,allowed_nodes):
-        reduced_adjacency = []
-        reduced_node_list = []
-        for p in range(len(adjacency)):
-            if nodes[p] in allowed_nodes:
-                new_adj = [a for a in adjacency[p] if a in allowed_nodes]
-                reduced_node_list.append(nodes[p])
-                reduced_adjacency.append(new_adj)
-        return reduced_node_list,reduced_adjacency
-      
-    def CommunityStructure(self,nodes,adjacency):
+       
+    def community_structure(self,nodes,adjacency):
         igraph,index_igraph = self.igraph_graph(nodes,adjacency)
         community = ig.GraphBase.community_leading_eigenvector(igraph)
         community_dict = {}
@@ -428,15 +331,7 @@ class Graph(GenericMethods):
             adj_idx = old_order.index(order[n])
             new_adjecancy.append(old_adjacency[adj_idx])
         return new_adjecancy
-        
-    def RemoveCandidates(self,dict1,dict2):
-        all_values = [v for val in dict2.values() for v in val]
-        for key,value in dict1.items():
-            #print key,">>",value
-            restrict_value = [v for v in value if v not in all_values]
-            #print key,">>", restrict_value
-            dict1[key] = restrict_value
-        return dict1        
+               
     
     def optimal_graph_order_from_node(self,start_node,nodes,adjacency):
         # given the graph structure and the starting node (source), tries to create best order of vertices to visit
@@ -445,65 +340,23 @@ class Graph(GenericMethods):
         G = nx.Graph()
         G.add_nodes_from(nodes)
         G.add_edges_from(edges) 
-        G_traverse_order = self.OrderBfsEdges(nx.bfs_edges(G,start_node),start_node)
+        G_traverse_order = self.order_bfs_edges(nx.bfs_edges(G,start_node),start_node)
         
         while len(G_traverse_order) < len(G.nodes()):  # if not all nodes are traversed (separate subgraphs)
             leftovers = list(set(G.nodes()) - set(G_traverse_order))
             new_start_node = random.choice(leftovers)
-            new_traverse_order = self.OrderBfsEdges(nx.bfs_edges(G,new_start_node),new_start_node)
+            new_traverse_order = self.order_bfs_edges(nx.bfs_edges(G,new_start_node),new_start_node)
             G_traverse_order = G_traverse_order + new_traverse_order
         return G_traverse_order
     
-    def OrderBfsEdges(self,edges,start):
+    def order_bfs_edges(self,edges,start):
         order = []
         order.append(start)
         for e in edges:
             order.append(e[1])
         return order    
-    
-    def OptimalGraphOrder(self,nodes,adjacency):
-        # given the community structure, tries to create best order of vertices to visit
-        # starts at the biggest community
-        #     >>    at the node with highest degree
-        #     >>    continues through its connections (ordering them based on their degree)
-        communities = self.CommunityStructure(nodes,adjacency)
-        nxgraph = self.networkx_graph(nodes,adjacency)        
-        ranked_communities = [(members,len(members)) for community,members in communities.items()]
-        final_communities = self.RankCommunityMembers(nxgraph, ranked_communities)
-        node_order = [m[0] for member in final_communities for m in member]
-        return node_order
         
-    def RankCommunityMembers(self,graph,communities):    
-        ranked_communities = []
-        for community in communities:
-            order_degrees = []
-            for member in community[0]:
-                degree = self.GetIntraCommunityDegree(graph,member,community[0])
-                order_degrees.append((member,degree))
-            order_degrees = sorted(order_degrees,key = lambda x:x[1],reverse = True)
-            ranked_communities.append(order_degrees)
-        return ranked_communities
-                            
-    def GetIntraCommunityDegree(self,graph,node,community):
-        all_neighbors= nx.neighbors(graph,node)
-        intra_neighbors = [neighbor for neighbor in all_neighbors if neighbor in community]
-        #print node, ">>", all_neighbors, intra_neighbors
-        return len(intra_neighbors)
-    
-    def VertexDegreeDistribution(self,graph):
-        node_degrees = nx.degree(graph)
-        return node_degrees.values()
-
-    def PlotHistogram(self,values):
-        hist,bin_edges = np.histogram(values,bins = len(set(values)),normed=True)
-        #hist,bin_edges = np.histogram(values,bins = len(set(values)))
-        mu,sigma = np.mean(values),np.std(values)
-        width = 0.7 * (bin_edges[1] - bin_edges[0])
-        center = (bin_edges[:-1] + bin_edges[1:]) / 2
-        plt.bar(center, hist, align='center', width=width)
-        plt.show()
-        
-    def JaccardSimCoefficient(self,set1,set2):
+    def jaccard_sim_coefficient(self,set1,set2):
         #The Jaccard index, also known as the Jaccard similarity coefficient 
         #(originally coined coefficient by Paul Jaccard), is 
         #a statistic used for comparing the similarity and diversity of sample sets. 
@@ -515,20 +368,13 @@ class Graph(GenericMethods):
         J = float(len(intersection))/float(len(union))
         return J
     
-    def CommunityStructureCompare(self,nodes1,adjacency1,nodes2,adjacency2):
-        community_dict_1 = self.CommunityStructure(nodes1,adjacency1)
-        community_dict_2 = self.CommunityStructure(nodes2,adjacency2)            
-        """
-    if community graph structure will be exploited in the future
-        //TO DO//
-        """
+    def community_structure_compare(self,nodes1,adjacency1,nodes2,adjacency2):
+        community_dict_1 = self.community_structure(nodes1,adjacency1)
+        community_dict_2 = self.community_structure(nodes2,adjacency2)            
+        #//TO DO//
+        #if community graph structure will be exploited in the future
+        return community_dict_1,community_dict_2
         
-    def LabelCompatible(self,nodes_graph1,nodes_graph2):
-        label_candidates = {}
-        for node in nodes_graph1:
-            candidate_assign = [n for n in nodes_graph2 if n[-1]==node[-1]]
-            label_candidates.setdefault(node,candidate_assign)
-        return label_candidates
         
     def get_conns_dict(self,nxgraph):
         conn_dict = {}
@@ -539,65 +385,9 @@ class Graph(GenericMethods):
             return conn_dict
         else:
             raise Exception("Contacts can not be extracted for subgraph without any edges")
-        
-    def ExtractSubgraph(self,graph,node):
-        neighbors = nx.neighbors(graph,node)
-        all_nodes = neighbors + [node]  #get allnodes for which subgraph should be extracted
-
-        subgraph = nx.subgraph(graph,all_nodes)
-        subconn_dict = self.get_conns_dict(subgraph)
-        sub_nodes,sub_adjacency = self.GetUnsortedNodesAdjacency(subconn_dict)        
-        return sub_nodes,sub_adjacency
-
-    def ExtractSubgraphkHops(self,graph,node,hops):
-        all_hop_nodes= [n for n,d in nx.shortest_path_length(graph,source=node).items() if d<=hops]
-        all_nodes = all_hop_nodes + [node]  #get allnodes for which subgraph should be extracted
-        all_nodes = list(set(all_nodes))
-        subgraph = nx.subgraph(graph,all_nodes)
-        subconn_dict = self.get_conns_dict(subgraph)
-        sub_nodes,sub_adjacency = self.GetUnsortedNodesAdjacency(subconn_dict)        
-        return sub_nodes,sub_adjacency
-
-    def SubgraphIsoFiltering(self,nodes1,adjacency1,nodes2,adjacency2):
-        filtered_assignment_candidates = {}        
-        assign_candidates = self.LabelCompatible(nodes1, nodes2)        
-        total_graph1 = self.networkx_graph(nodes1,adjacency1)
-        total_graph2 = self.networkx_graph(nodes2,adjacency2)
-        
-        for root1,assignments in assign_candidates.items():
-            nodes_subgraph1, adjacency_subgraph1 = self.ExtractSubgraph(total_graph1,root1)
-            graph1,graph_index1 = self.IgraphFilteringGraph(nodes_subgraph1,adjacency_subgraph1,root1)
-            for assignment in assignments:
-                nodes_subgraph2,adjacency_subgraph2 = self.ExtractSubgraph(total_graph2,assignment)
-                graph2,graph_index2 = self.IgraphFilteringGraph(nodes_subgraph2,adjacency_subgraph2,assignment)
-                SIso = IgraphSubIso()
-                if SIso.igraph_subisomorphism(graph2,graph1):
-                    #print root1,">>",assignment, "isomorphic!"
-                    filtered_assignment_candidates.setdefault(root1,[]).append(assignment)
-                else:
-                    continue
-        return filtered_assignment_candidates
+         
     
-    def SubgraphIsokHopsFiltering(self,nodes1,adjacency1,nodes2,adjacency2,k_hops):
-        filtered_assignment_candidates = {}        
-        assign_candidates = self.LabelCompatible(nodes1,nodes2)        
-        total_graph1 = self.networkx_graph(nodes1,adjacency1)
-        total_graph2 = self.networkx_graph(nodes2,adjacency2)
-        
-        for root1,assignments in assign_candidates.items():
-            nodes_subgraph1, adjacency_subgraph1 = self.ExtractSubgraphkHops(total_graph1,root1,k_hops)
-            graph1,graph_index1 = self.IgraphFilteringGraph(nodes_subgraph1,adjacency_subgraph1,root1)
-            for assignment in assignments:
-                nodes_subgraph2,adjacency_subgraph2 = self.ExtractSubgraphkHops(total_graph2,assignment,k_hops)
-                graph2,graph_index2 = self.IgraphFilteringGraph(nodes_subgraph2,adjacency_subgraph2,assignment)
-                SIso = IgraphSubIso()
-                if SIso.igraph_subisomorphism(graph2,graph1):
-                    filtered_assignment_candidates.setdefault(root1,[]).append(assignment)
-                else:
-                    continue
-        return filtered_assignment_candidates
-    
-    def GetPatterns(self,nodes,adjacency):
+    def get_patterns(self,nodes,adjacency):
         pattern_dict = {}
         for i in range(len(nodes)):
             pattern = [j[-1] for j in adjacency[i]]
@@ -609,15 +399,15 @@ class Graph(GenericMethods):
     def compare(self,nodes1,adjacency1,nodes2,adjacency2,comparison,quantitative=False):
         #    compares neihborhood similarities for vertices of graph1 and graph2
         candidates = {}
-        pattern_dict1 = self.GetPatterns(nodes1,adjacency1)   
-        pattern_dict2 = self.GetPatterns(nodes2,adjacency2)
+        pattern_dict1 = self.get_patterns(nodes1,adjacency1)   
+        pattern_dict2 = self.get_patterns(nodes2,adjacency2)
         if comparison == "Jaccard":
             print "Comparing vertex similarities given neighborhoods (Jaccard coefficient)... "            
             for n1 in range(len(sorted(pattern_dict1.keys()))): #,key=lambda x:int(x[:-1])))):
                 for n2 in range(len(sorted(pattern_dict2.keys()))): #,key=lambda x:int(x[:-1])))):
                     # if the vertices are of the same type
                     if pattern_dict1.keys()[n1][-1] == pattern_dict2.keys()[n2][-1]:
-                        sim_score = self.JaccardSimCoefficient(pattern_dict1[pattern_dict1.keys()[n1]],pattern_dict2[pattern_dict2.keys()[n2]])
+                        sim_score = self.jaccard_sim_coefficient(pattern_dict1[pattern_dict1.keys()[n1]],pattern_dict2[pattern_dict2.keys()[n2]])
                         #print pattern_dict1.keys()[n1],">>",pattern_dict2.keys()[n2]
                         #if sim_score > 0:
                         if sim_score >= 0:
@@ -627,16 +417,16 @@ class Graph(GenericMethods):
             if quantitative :
                 return candidates
             else:
-                candidates = self.OrderCandidates(candidates)
+                candidates = self.order_candidates(candidates)
                 return candidates
 
-        elif comparison == "Community":
-            self.CommunityStructureCompare(nodes1,adjacency1,nodes2,adjacency2)
-            return candidates
+        #elif comparison == "Community":
+            #self.community_structure_compare(nodes1,adjacency1,nodes2,adjacency2)
+            #return candidates
         else:
-            raise Exception("Unknown graph comparison parameter given (method Compare) ... ")
+            raise Exception("Unknown graph comparison parameter given (method compare of class Graph) ... ")
         
-    def OrderCandidates(self,dictionary):
+    def order_candidates(self,dictionary):
         #print dictionary
         for key,value in dictionary.items():
             sort_value = sorted(value,key=lambda x: x[1],reverse= True)      
@@ -677,6 +467,7 @@ class Heuristic(Graph):
     #methods in this class provide the most optimal ordering of the graph matching priorities -> from vertices of the data graph to the vertices of the structure (pdb) graph
     def __init__(self):
         super(Graph,self).__init__()
+    
     # @param
     # @retval        
     # for NOE/PDB nodes
@@ -684,35 +475,32 @@ class Heuristic(Graph):
     # get neighboorhoods overlap
     # real value overlap assign to position in matrix
     # HungarianMaximize (matrix)   
-    def hungarian_first_order(self,noe_nodes,noe_adjacency,pdb_nodes,pdb_adjacency,compatibility_dict,hops=1):
+    def hungarian_first_order(self,noe_nodes,noe_adjacency,pdb_nodes,pdb_adjacency,compatibility_dict,output_file,hops=1):
         
+        fout = open(output_file,"w")
         noe_dict = self.get_conns_dict_from_adj(noe_nodes,noe_adjacency)
         pdb_dict = self.get_conns_dict_from_adj(pdb_nodes,pdb_adjacency)
-        types_noe = self.SortDictType(noe_dict)
-        types_pdb = self.SortDictType(pdb_dict)
+        types_noe = self.sort_dict_type(noe_dict)
+        types_pdb = self.sort_dict_type(pdb_dict)
         #if len(types_noe.keys())>len(types_pdb.keys()):    # crashes calculation at short distance thresholds
             #raise Exception("Difference in types of peaks and atoms >> check your input files")
         all_munkres_candidates = {}
         for type in types_noe.keys():
-            candidates_dict = self.GetRealValueAssignDict(types_noe[type],types_pdb[type])
-            candidate_matrix,noe_indices,pdb_indices = self.CreateRealValueAssignmentMatrix(candidates_dict)    
-            Nassigned, assigned_indices = self.MunkresMaximiseAssignment(candidate_matrix)
-            munkres_candidates = self.MunkresBasedCandidates(assigned_indices,candidate_matrix,noe_indices,pdb_indices) 
+            candidates_dict = self.get_real_value_assign_dict(types_noe[type],types_pdb[type])
+            candidate_matrix,noe_indices,pdb_indices = self.create_real_val_assign_matrix(candidates_dict)    
+            Nassigned, assigned_indices = self.munkres_maximise_assignment(candidate_matrix)
+            munkres_candidates = self.munkres_based_candidates(assigned_indices,candidate_matrix,noe_indices,pdb_indices)
+            # write out the solution
+            for key,val in munkres_candidates.items():
+                fout.write("%s\t%s\n"%(key,val))
             all_munkres_candidates.update(munkres_candidates)   # add every type to the total dictionary
+        fout.close()
         return all_munkres_candidates
-    
-    #    @params dictionary in which last element in key string indicates type
-    #    @retval    nested dictionary where each type is separate dict
-    def SplitDictionaryToType(self,dict1):
-        nested_dict = {}
-        for key,value in dict1.items():
-            nested_dict.setdefault(key[-1],{})[key]=value
-        return nested_dict
-    
+        
     #    @params list of nodes and nested list of adjacency for 2 graph (nodes1/adjacency1 and nodes2/adjacency2)
     #    @retval    dictionary of candidate pairs where key is a node of graph1 and value is a list of tuples
     #    @retval    in values tuples:in position1 is node compatible for matching in graph2 and in position2 is a score that such matching could achieve    
-    def GetRealValueAssignDict(self,conn_dict1,conn_dict2):
+    def get_real_value_assign_dict(self,conn_dict1,conn_dict2):
         # loop over all nodes in one graph        
         candidates = {}
         for peak,noeconns in conn_dict1.items():
@@ -723,20 +511,8 @@ class Heuristic(Graph):
                 common,noe_left,pdb_left = self.extract_overlap(noe_neighbor_labels,pdb_neighbor_labels)
                 candidates.setdefault(peak,[]).append((atom,len(common)))
         return candidates
-    
-    # @params
-    # @retval
-    # for two dictionaries of sorted matching priorities (from G1 vertices to G2 vertices)
-    # join the options and avoid repeats
-    def JoinPriorityLists(self,priority_dict1,priority_dict2):
-        merged_priorities = {}
-        for key,value in priority_dict1.items():
-            value2 = [v for v in priority_dict2[key] if v not in value]
-            final_priorities = value + value2
-            merged_priorities.setdefault(key,final_priorities)
-        return merged_priorities
-    
-    ## Andy's heuristic method >> 10th October 2016
+        
+    ## Andy's heuristic method >> 10th October 2016 [original name: Craic_D]
     ## set candidate list to contain only those in dict
     # @param dic - hash table of assignment options nmr data graph vertices (keys); lists of assignment options (values)
     # @param ref - hash table of reduced assignment option for nmr data graph vertices
@@ -753,97 +529,3 @@ class Heuristic(Graph):
                 # mask is a boolean array that will select only those elements of input that are in the reference
                 dic[key]=np.array(dic[key])[mask]
             return dic # 03/03/2017 Iva -- added return value
-      
-    
-    # @params
-    # @retval        
-    # for NOE/PDB nodes
-    # get association graph
-    # get all shortest paths for nodes in association graph
-    # give weights increasing with the decrease in the shortest path
-    # determine both the optimal graph trasversal and the optimal candidate assignments
-    def DirectAssociationGraph(self,nmr_node_list,nmr_adjacency,pdb_node_list,pdb_adjacency):
-        
-        indx_nmr_adjacency = self.IndexAdjacency(nmr_node_list,nmr_adjacency)
-        indx_pdb_adjacency = self.IndexAdjacency(pdb_node_list,pdb_adjacency)
-        
-        association_nodes = {}
-        id=-1
-        for i in range(len(nmr_node_list)):
-            for j in range(len(pdb_node_list)):
-                id+=1
-                association_nodes.setdefault(id,str(i)+"_"+str(j))  # formed of indices of the nodes in nmr and pdb list
-                
-        association_edges = self.GetDirectEdges(association_nodes,indx_nmr_adjacency,indx_pdb_adjacency)
-        
-        AG = nx.Graph()
-        AG.add_nodes_from(association_nodes.keys())
-        AG.add_edges_from(association_edges)
-        paths_len_matrix = self.ComputeGraphPaths(AG)
-        longest_path = np.amax(paths_len_matrix)
-        weight_matrix = longest_path-paths_len_matrix   #    give highest weight to the shortest paths
-        weight_matrix[paths_len_matrix==0]=0    #    set all paths that do not exist to 0
-
-        all_weights = np.sum(weight_matrix,axis=0)
-        weight_dict = {}
-        reverse_weight_dict = {}
-        for i in range(len(all_weights)):
-            weight_dict.setdefault(i,all_weights[i])
-            reverse_weight_dict.setdefault(all_weights[i],[]).append(i)
-                   
-        nmr_graph_traversal = self.BestGraphTraversal(reverse_weight_dict,association_nodes,nmr_node_list,pdb_node_list)
-        nmr_new_adjacency = self.re_order_adjecancy(nmr_graph_traversal,nmr_node_list,nmr_adjacency)
-                            
-        return nmr_graph_traversal,nmr_new_adjacency
-        
-    def BestGraphTraversal(self,weights,anodes,nodes1,nodes2):
-        
-        graph_traversal_order = []
-        #graph_matching_order = {}
-        for w in sorted(weights.keys(),reverse=True):
-            print w, ">>", weights[w]
-            for node in weights[w]:
-                g1,g2=anodes[node].split("_")
-                if nodes1[int(g1)] not in graph_traversal_order:
-                    graph_traversal_order.append(nodes1[int(g1)])
-                #graph_matching_order.setdefault(nodes1[int(g1)],[]).append(nodes2[int(g2)])
-        return graph_traversal_order        
-        
-        
-    def ComputeGraphPaths(self,graph):
-        shortest_paths_matrix = np.zeros(shape=(len(graph.nodes()),len(graph.nodes())))
-        for n1 in graph.nodes():
-            for n2 in graph.nodes():
-                try:
-                    shortest_paths_matrix[n1,n2] = nx.shortest_path_length(graph,n1,n2)
-                except nx.exception.NetworkXNoPath:
-                    continue
-        return shortest_paths_matrix
-    
-    def GetDirectEdges(self,nodes,links1,links2):
-
-        association_adjacency = {}
-        for k in nodes.keys():
-            k1,k2 = nodes[k].split("_")
-            for j in nodes.keys():
-                j1,j2 = nodes[j].split("_")
-                if int(j1) in links1[int(k1)] and int(j2) in links2[int(k2)]:
-                    association_adjacency.setdefault(j,[]).append(k)
-                else:
-                    continue
-        association_edges = self.TurnAdjacencyToEdges(association_adjacency)                
-        return association_edges
-
-    def TurnAdjacencyToEdges(self,node_adjacency):
-        all_edges = []
-        for node,adj in node_adjacency.items():
-            for a in adj:
-                all_edges.append((node,a))
-        return all_edges
-
-    def IndexAdjacency(self,node_list,node_adjacency):
-        adjacency = {}
-        for i in range(len(node_list)): # loop over indices in node list
-            adj = [node_list.index(neigh) for neigh in node_adjacency[i]]   # get indices of direct neighbours from node list
-            adjacency.setdefault(i,adj)
-        return adjacency

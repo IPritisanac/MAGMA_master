@@ -5,8 +5,8 @@ some generic methods used by several other classes (PDBData, NMRData, McGregor, 
 """
 
 import os
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+#import matplotlib as mpl
+#import matplotlib.pyplot as plt
 
 class GenericMethods(object):
     #    methods of this class are generally useful and are therefore inherited by the other classes    
@@ -15,33 +15,13 @@ class GenericMethods(object):
         import collections
         a_multiset = collections.Counter(lista)
         b_multiset = collections.Counter(listb)
-        overlap = list((a_multiset & b_multiset).elements())
+        #overlap = list((a_multiset & b_multiset).elements())
         
         overlap = list((a_multiset & b_multiset).elements())
         a_remainder = list((a_multiset - b_multiset).elements())
         b_remainder = list((b_multiset - a_multiset).elements())
         return overlap,a_remainder,b_remainder
-    """
-    def MakeLV_L(self,nodes,adjacency):
-        new_node_labels = []
-        for node in nodes:
-            if node[-1] == "V":      
-                new_node_labels.append(node[:-1] + "L")
-            else:
-                new_node_labels.append(node)
-        
-        new_adjacency = []
-        for adj in adjacency:
-            new_adj = []
-            for a in adj:
-                if a[-1] == "V":
-                    new_adj.append(a[:-1] + "L")
-                else:
-                    new_adj.append(a)
-            new_adjacency.append(new_adj)
-        return new_node_labels, new_adjacency              
-    """ 
-        
+
     def get_nodes_adjacency(self,contact_dict,lig_flag=False,merge_proRS=True): #  lig_flag and merge_proRS -- not needed
         
         node_list = [key for key in contact_dict.keys()] #,key = lambda x:int(x[:-1]))]
@@ -49,7 +29,7 @@ class GenericMethods(object):
         
         return node_list,adjecancy   
     
-    def GetUnsortedNodesAdjacency(self,contact_dict):
+    def get_unsorted_nodes_adjacency(self,contact_dict):
         node_list = [key for key in contact_dict.keys()]
         adjecancy = [list(set(contact_dict[n])) for n in node_list]
         return node_list,adjecancy    
@@ -63,39 +43,14 @@ class GenericMethods(object):
             conn_dict.setdefault(nodelist[n],adjacency[n])
         return conn_dict       
     
-    def SortDictType(self,dictionary):
+    def sort_dict_type(self,dictionary):
         # given dictionary where keys are strings and the last character in the string indicated type
         # split the dictionary according to types
         types_dictionary = {}
         for key in dictionary.keys():
             types_dictionary.setdefault(key[-1],{})[key] = dictionary[key]
         return types_dictionary
-
-    def RemoveFromPriority(self,remove,init_prior):
-        new_init_prior = {key:value for key,value in init_prior.items() if key not in remove}
-        return new_init_prior  
-    
-    def KnownAssignments(self,assignment_file):
-        if os.path.isfile(assignment_file):
-            known_assignments = {}
-            fo = open(assignment_file,"r")
-            for line in fo:
-                stripped = line.strip()
-                splitted = stripped.split()
-                if len(splitted) == 2:
-                    known_assignments.setdefault(splitted[0],[]).append(splitted[1])
-                else:
-                    continue
-        else:
-            print "No assignments known from before ..."
-            known_assignments = {}
-        return known_assignments
-    
-    def FixCandidatesDict(self,assign_candidates_dict,known_assignments):
-        for key,value in assign_candidates_dict.items():
-            if key in known_assignments.keys():
-                assign_candidates_dict[key] = known_assignments[key]
-        return assign_candidates_dict
+        
         
     def join_ligand_connections(self,protein_dict,ligand_dict):
         # join the values of the common keys between ligand and protein dictionaries
@@ -106,44 +61,3 @@ class GenericMethods(object):
             else:
                 protein_dict[key]=value
         return protein_dict       
-    
-    def PlotAssignmentScoreMatrix(self,score_matrix,Npeaks,Natoms,label):
-        
-        cdict = {'red': ((0.0, 0.0, 0.0),
-                        (0.5, 1.0, 0.0),
-                        (1.0, 0.5, 1.0)),
-                'green': ((0.0, 0.0, 0.0),
-                          (0.5, 1.0, 0.0),
-                          (1.0, 0.5, 1.0)),
-                'blue': ((0.0, 0.0, 0.0),
-                        (0.5, 1.0, 0.0),
-                        (1.0, 0.5, 1.0))}
-            
-            
-        cdict = {'red':   [(0.0,  1.0, 1.0),
-                            (0.5,  1.0, 1.0),
-                            (1.0,  0.0, 0.0)],
-    
-                    'green': [(0.0,  1.0, 1.0),
-                              (0.25, 1.0, 1.0),
-                              (0.75, 0.0, 0.0),
-                              (1.0,  0.0, 0.0)],
-    
-                    'blue':  [(0.0,  1.0, 1.0),
-                              (0.5,  0.0, 0.0),
-                              (1.0,  0.0, 0.0)]}
-        
-        my_cmap = mpl.colors.LinearSegmentedColormap('my_colormap',cdict,256)
-        
-        plt.pcolor(score_matrix, cmap=my_cmap)
-        #plt.pcolor(self.pattern_score_matrix)
-        plt.xticks(range(0,Npeaks,5))
-        plt.yticks(range(0,Natoms,5))
-        plt.title('Peak_residue mapping_'+str(label))
-        plt.xlabel('Atom ID')
-        plt.ylabel('Peak ID')
-        plt.grid(True)
-        plt.colorbar()
-        plt.show()
-        
- 

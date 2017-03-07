@@ -10,10 +10,6 @@ from graph_heuristics import Graph
 
 # import the user input file with parameters for the calculation
 
-filename="input_files/ein/inputEIN.txt"
-magma_version="py"
-
-"""
 try:
     filename = sys.argv[1]
 except:
@@ -24,7 +20,7 @@ if len(sys.argv)==2:
     magma_version = sys.argv[2]
 else:
     magma_version = "c"    # default will be c version
-"""   
+
    
 if magma_version=="c" or magma_version=="py":
     print "Running MAGMA version %s"%magma_version
@@ -48,7 +44,7 @@ if run_mode=='all_subgraphs':
     else:       
         print "Subgraph isomorphism not found \nRunning MCES algorithm..."
         runtag = ".full"
-        assign_options=M.set_assignment_options(data_vertices,data_adj,struct_vertices,struct_adj,G,stripmode,filter_dict={})
+        assign_options=M.set_assignment_options(data_vertices,data_adj,struct_vertices,struct_adj,G,stripmode,runtag,filter_dict={})
         # update initial data structures according to the results of the optimization runs
         assign_options,data_vertices,data_adj,runtime= M.optimise_run_order(G,assign_options,data_vertices,data_adj,struct_vertices,struct_adj,niter,nitermces,runtime,runtag,version=magma_version,optimise_mode="y")
         if magma_version=="c":  # if c version of mcgregor algorithm is employed
@@ -85,7 +81,7 @@ elif run_mode=='connected_subgraphs':
             # //TO DO// support filtering here
             #filter_assign_options = M.get_filter(subgraph_vertices,subgraph_adj,struct_vertices,struct_adj,stripmode)
             #set_assignment_options(...filter=filter_assign_options)
-            sub_assign_options=M.set_assignment_options(sub_vert,sub_adj,struct_vertices,struct_adj,G,stripmode,filter_dict={})
+            sub_assign_options=M.set_assignment_options(sub_vert,sub_adj,struct_vertices,struct_adj,G,stripmode,runtag,filter_dict={})
             # update initial data structures according to the results of the optimization runs
             sub_assign_options,sub_vert,sub_adj,runtime = M.optimise_run_order(G,sub_assign_options,sub_vert,sub_adj,struct_vertices,struct_adj,niter,nitermces,runtime,runtag,version=magma_version,optimise_mode="y")
             if magma_version=="c":

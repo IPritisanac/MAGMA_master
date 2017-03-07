@@ -62,6 +62,14 @@ After a successful calculation the directory 'results/' will contain:
 							
 The rest of the outputs contain details of certain steps of the overall MAGMA protocol: 
 (less relevant for the user, but useful in debugging and analysis of run progression)
+
+	. hungarian_assignmentX.out - this is the assignment guess prior to execution of the exact MCES algorithm (relevant to the user!)
+								- in case the calculation takes very long to converge -- this assignment
+								  can be treated as the best guess, approximate assignment
+								- X - full for "all_subgraphs" mode
+								- X - subgraph numerical id for "connected_subgraphs" mode
+								
+
 							
 	. conv.2.x.out	-	text file monitoring details of the first step of MAGMA optimization prior to execution of complete MCES search
 					-	for each step of iterative optimization (column 1) enumerate how many vertices (column 3) have scored a particular score (column 2)
