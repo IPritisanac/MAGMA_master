@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 class GenericMethods(object):
     #    methods of this class are generally useful and are therefore inherited by the other classes    
     #    returns overlap of the two lists/arrays and the reminder of either
-    def Overlap(self,lista,listb):
+    def extract_overlap(self,lista,listb):
         import collections
         a_multiset = collections.Counter(lista)
         b_multiset = collections.Counter(listb)
@@ -21,7 +21,7 @@ class GenericMethods(object):
         a_remainder = list((a_multiset - b_multiset).elements())
         b_remainder = list((b_multiset - a_multiset).elements())
         return overlap,a_remainder,b_remainder
-    
+    """
     def MakeLV_L(self,nodes,adjacency):
         new_node_labels = []
         for node in nodes:
@@ -40,7 +40,7 @@ class GenericMethods(object):
                     new_adj.append(a)
             new_adjacency.append(new_adj)
         return new_node_labels, new_adjacency              
-        
+    """ 
         
     def get_nodes_adjacency(self,contact_dict,lig_flag=False,merge_proRS=True): #  lig_flag and merge_proRS -- not needed
         

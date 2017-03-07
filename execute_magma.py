@@ -10,7 +10,7 @@ from graph_heuristics import Graph
 
 # import the user input file with parameters for the calculation
 
-filename="input_files/input_hsp90.txt"
+filename="input_files/ein/inputEIN.txt"
 magma_version="py"
 
 """

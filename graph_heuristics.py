@@ -510,7 +510,7 @@ class Graph(GenericMethods):
         #The Jaccard coefficient measures similarity between finite sample sets, 
         #and is defined as the size of the intersection divided by the size of the union of the sample sets:
         #J (A,B) = A intersect B / A union B
-        intersection, rem1, rem2 = self.Overlap(set1,set2)
+        intersection, rem1, rem2 = self.extract_overlap(set1,set2)
         union = list(intersection) + list(rem1) + list(rem2)
         J = float(len(intersection))/float(len(union))
         return J
@@ -664,7 +664,7 @@ class Graph(GenericMethods):
         # overlap >> present in both sets
         # set1_rem >> present only in set label_set1 (G1, small graph)
         # set2_rem >> present only in set label_set2 (G2, big graph)
-        overlap,set1_rem,set2_rem = self.Overlap(label_set1,label_set2)
+        overlap,set1_rem,set2_rem = self.extract_overlap(label_set1,label_set2)
         
         if len(set1_rem) == 0:
                 print 'Correct labels!'
@@ -720,7 +720,7 @@ class Heuristic(Graph):
             noe_neighbor_labels = [n[-1] for n in noeconns]
             for atom,pdbconns in conn_dict2.items(): # extract label compatible pdb nodes
                 pdb_neighbor_labels = [p[-1] for p in pdbconns]
-                common,noe_left,pdb_left = self.Overlap(noe_neighbor_labels,pdb_neighbor_labels)
+                common,noe_left,pdb_left = self.extract_overlap(noe_neighbor_labels,pdb_neighbor_labels)
                 candidates.setdefault(peak,[]).append((atom,len(common)))
         return candidates
     
