@@ -235,8 +235,6 @@ class Graph(GenericMethods):
         for subgraph in subgraphs:
             subgraphs_dict.setdefault(len(subgraph.nodes()),[]).append(subgraph)
             #subgraphs_dict.setdefault(len(subgraphs[s].nodes()),[]).append(subgraphs[s])
-        print subgraphs_dict
-        sys.exit()
         return subgraphs_dict   
                                         
     def networkx_graph(self,node_list,adjacency_list):        
