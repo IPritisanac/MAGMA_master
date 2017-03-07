@@ -231,6 +231,7 @@ class Graph(GenericMethods):
     def classify_components(self,subgraphs):
         
         subgraphs_dict = {}            
+        
         #for s in range(len(subgraphs)):
         for subgraph in subgraphs:
             subgraphs_dict.setdefault(len(subgraph.nodes()),[]).append(subgraph)
