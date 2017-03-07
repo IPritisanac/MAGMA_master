@@ -1,15 +1,19 @@
 #! /usr/bin/python
-
 """
-MAGMA engine - executes methods defined in classes of modules: magma_class, mces, data, graph_heuristics, molecule, etc. (c) Iva Pritisanac | iva.pritisanac@gmail.com
+__author__: Iva Pritisanac
+
+MAGMA engine - executes methods defined in classes of magma_class.py, and graph_heuristics.py;
 """
 import sys,os
 from magma_class import Magma
-from mces import McGregor
 from graph_heuristics import Graph
 
-# import from user input file with parameters set for the calculation
+# import the user input file with parameters for the calculation
 
+filename="input_files/input_hsp90.txt"
+magma_version="py"
+
+"""
 try:
     filename = sys.argv[1]
 except:
@@ -20,6 +24,7 @@ if len(sys.argv)==2:
     magma_version = sys.argv[2]
 else:
     magma_version = "c"    # default will be c version
+"""   
    
 if magma_version=="c" or magma_version=="py":
     print "Running MAGMA version %s"%magma_version
@@ -87,7 +92,7 @@ elif run_mode=='connected_subgraphs':
                 M.run_complete_mcgregor_c(sub_assign_options,sub_vert,sub_adj,struct_vertices,struct_adj,runtime,runtag,mcesmode)
             if magma_version=="py":
                 M.run_complete_mcgregor_py(sub_assign_options,sub_vert,sub_adj,struct_vertices,struct_adj,runtime,runtag,mcesmode)
-        
+    
     print "Exiting magma split!"
     print "Calculation finished. Clean program exit ..."
     sys.exit(0)

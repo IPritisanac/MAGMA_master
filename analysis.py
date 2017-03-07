@@ -7,7 +7,8 @@ functions to analyse outputs of MAGMA calculations
 import os,sys
 
 #get max edges score (last integer on a single line)
-def GetScore(infile):
+def get_score(infile):
+    
     inny=open(infile)
     for line in inny.readlines():
         test=line.split()
@@ -24,7 +25,8 @@ def GetScore(infile):
         sys.exit(100)
 
 
-def AddFile(result_dict,infile):
+def add_file(result_dict,infile):
+    
     test=infile.split('vf2')
     if(len(test)>1): #treat vf2 files differently
         lim='vf2'
@@ -41,7 +43,7 @@ def AddFile(result_dict,infile):
                 if val not in result_dict[key]:
                     result_dict[key].append(val)
     else:    #treat mces  .txt files differently
-        lim=GetScore(infile)
+        lim=get_score(infile)
         print 'The maximum NOE score is :',lim
         tot_solutions=0
         n_solutions=0
@@ -88,7 +90,7 @@ def AddFile(result_dict,infile):
 
     #return result_dict
 
-def WriteResultDict(result_dict,outfile):
+def write_result_dict(result_dict,outfile):
     fout = open(outfile,"w")
     for k in sorted(result_dict,key=lambda k:len(result_dict[k])):
         #print k,
@@ -98,7 +100,7 @@ def WriteResultDict(result_dict,outfile):
         fout.write('\n')
     fout.close()
     
-def AnalAll(analdir):
+def analyse_all(analdir):
     result_dict= {}
     files=os.listdir(analdir)
     for file in files:
@@ -107,7 +109,7 @@ def AnalAll(analdir):
             if(len(test)==1):
                 tast=file.split('analysed') #no 'analysed' files
                 if(len(tast)==1):
-                    AddFile(result_dict,analdir+os.sep+file)
+                    add_file(result_dict,analdir+os.sep+file)
 
     #incorr,corr=RunAnal(result_dict)                
     #print len(corr),corr,len(incorr),incorr

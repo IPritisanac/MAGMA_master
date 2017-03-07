@@ -1,3 +1,10 @@
+"""
+__author__: Iva Pritisanac
+
+relies on network analysis package igraph | igraph.org
+uses igraph implementation of the algorithm VF2 to evaluate, count and write graph-subgraph isomorphism
+"""
+
 from generic import GenericMethods
 import igraph as ig
 import matplotlib.pyplot as plt
@@ -25,10 +32,10 @@ class IgraphSubIso(GenericMethods):
         plt.ylabel('Atom ID')
         plt.show()     
         
-    def IgraphSubIsomorphism(self,small_graph,big_graph):        
+    def igraph_subisomorphism(self,small_graph,big_graph):        
         return big_graph.subisomorphic_vf2(small_graph,color1 =big_graph.vs["color"] ,color2 =small_graph.vs["color"])
     
-    def IgraphCountSubIsomorphism(self,small_graph,big_graph):    
+    def igraph_count_subisomorphism(self,small_graph,big_graph):    
         N_subisomorphisms = big_graph.count_subisomorphisms_vf2(small_graph,color1 = big_graph.vs["color"] ,color2 = small_graph.vs["color"])
         return N_subisomorphisms
     
@@ -60,7 +67,7 @@ class IgraphSubIso(GenericMethods):
             results[key] = set(value)
         return results
         
-    def IgraphListSubIsomorphism(self,small_graph,big_graph,index1,index2,edge_matrix1,edge_matrix2,noe_nodes,noes,pdb_nodes,pdbs,pdbl,rescore):
+    def igraph_list_subisomorphism(self,small_graph,big_graph,index1,index2,edge_matrix1,edge_matrix2,noe_nodes,noes,pdb_nodes,pdbs,pdbl,rescore):
         
         total_results_score = {}
         all_isomorphisms = big_graph.get_subisomorphisms_vf2(small_graph,color1=big_graph.vs["color"],color2=small_graph.vs["color"])
@@ -79,7 +86,7 @@ class IgraphSubIso(GenericMethods):
             return results
         return total_results_score
     
-    def IgraphSubIsomorphismWriteResult(self,output_file,index_file,assign_dict,init_index_small,init_index_big):
+    def igraph_subisomorphism_write_result(self,output_file,index_file,assign_dict,init_index_small,init_index_big):
         label_results = {} 
         out = open(output_file+"_"+index_file+".txt","w")        
         for methyl,assignments in assign_dict.items():

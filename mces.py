@@ -1,10 +1,18 @@
-""" 
-algorithm for maximal common edge subgraph (implementation is based on theoretical work from James J. McGregor;1982 | https://pdfs.semanticscholar.org/ed10/c6f788922cd5e7cb26c3d55f676979958852.pdf);
+"""
+__authors__: Iva Pritisanac and Andy Baldwin
+
+implementation of McGregor algorithm for maximal common edge subgraph in
+
+        > in c (class McGregor; AJB)
+        > in python (class MCES_PY; IP)
+
+implementation based on theoretical work from James J. McGregor;1982 | 
+https://pdfs.semanticscholar.org/ed10/c6f788922cd5e7cb26c3d55f676979958852.pdf);
 """
 
 import copy,collections,time
 from generic import GenericMethods
-import numpy as np          
+import numpy as np
 import os,sys
 
 class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C version of the algorithm on the basis of python class MCES_PY
@@ -13,7 +21,7 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
         
         self.G1nodes = G1_node_list    
         
-    def PrepareMcGregor(self,G1_adjacency,G2_node_list,G2_adjacency,G2_long_node_list,G2_long_adjacency,matching_priority,outdir):
+    def prepare_mcgregor(self,G1_adjacency,G2_node_list,G2_adjacency,G2_long_node_list,G2_long_adjacency,matching_priority,outdir):
         
         self.outdir=outdir
         # IP 03/03/2017 not necessary -- checked for by Magma class
@@ -52,13 +60,13 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
     # @param assigned - updated hash table where every vertex (key) has with it associated list of assignment options (values)
     # @param init_matchingoptions - original hash table where every vertex (key) has with it associated list of assignment options (values)
     # @retval new_priorities - an updated hash table of assignment options; or in cases of errors in updating, the original init_matchingoptions 
-    def RePrioritize(self,assigned,init_matchingoptions):
+    def mc_reprioritize(self,assigned,init_matchingoptions):
         
         if not bool(assigned):  # if the entering assigned dictionary is empty
-            print "An empty assignment dictionary entered in RePrioritize assigned; returning the original dictionary of assignment options"
+            print "An empty assignment dictionary entered in mc_reprioritize assigned; returning the original dictionary of assignment options"
             return init_matchingoptions # return the original candidate matching options
         elif len(assigned.keys())!=len(init_matchingoptions.keys()): # if the entering dictionary does not have an assignment option for all vertices
-            print "The assignment dictionary entering in RePrioritize does not match the original; returning the original dictionary of assignment options"
+            print "The assignment dictionary entering in mc_reprioritize does not match the original; returning the original dictionary of assignment options"
             return init_matchingoptions
         else:
             try:
@@ -72,27 +80,11 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
                     #print key,':',value
                 return new_priorities
             except ValueError:  # in case keys of the two dictionaries don't match
-                print "RePrioritize caught ValueError, returning the original dictionary of assignment options"
+                print "mc_reprioritize caught ValueError, returning the original dictionary of assignment options"
                 return init_matchingoptions
         
-        # AJB Oct 2016
-        #have seen a rare error here:
-        #have applied a terrible hack to fix it. 
-        #rather than debug, function will abort.                
-        #try:
-        #    new_priorities = {}
-        #    for peak,atoms in init_matchingoptions.items():
-        #        old_prior = [a for a in atoms if a not in assigned[peak]]
-        #        new_prior = assigned[peak]+old_prior
-        #        new_priorities.setdefault(peak,new_prior)
-        #    #print "Reordered match order >> " #,new_priorities
-        #    for key,value in new_priorities.items():
-        #        print key,':',value
-        #    return new_priorities                   
-        #except:
-        #    return init_matchingoptions
-
-    def McGregorLoop(self,outfile,runall=True,n_mces=None,time_check=False,maximum_time=None,thresh=True,parflg=0):
+        
+    def mcgregor_loop(self,outfile,runall=True,n_mces=None,time_check=False,maximum_time=None,thresh=True,parflg=0): # AJB Oct 2016 
             
         try: #this is the number of mces-es to acquire. 0 means get all.
             n_mcesSet=int(n_mces)
@@ -117,10 +109,9 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
         # IP 04/03/2017
         # assumes that the input text file is located inside dir MAGMA/ 
         # assumes that bin is located at path/to/MAGMA/bin        
-	#cpath = ".."+os.sep+".."+os.sep+"src"+os.sep+"mcesCore"
+        #cpath = ".."+os.sep+".."+os.sep+"src"+os.sep+"mcesCore"
         cpath = os.path.abspath("bin"+os.sep+"mcesCore") # get the absolute path to the bin directory and the core of the C code for the mces algorithm
-        if(parflg==0):
-	    
+        if(parflg==0):  
             runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init "+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(parflg) 
             #runline='../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(parflg)
         else:
@@ -149,7 +140,7 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
                     for j in range(len(test)-1):
                         ass.append(test[j+1])
                     final_assignments[key]=ass
-            os.system('rm -rf '+self.outdir+'/core')
+            os.system('rm -rf '+self.outdir+os.sep+'core')
             return edgesleft,final_assignments
         else:
             print 'No output'
@@ -163,7 +154,7 @@ class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C
 # the class prepares the data structures for the MCES algorithm
 # the class executed MCES algorithm
 # the MCES algorithm implemented here is based on the theoretical work from McGregor J.J. 1982.
-class MCES_PY(GenericMethods):   
+class MCES_PY(GenericMethods):   # IP python version
     
     def __init__(self,g1_node_list): 
         
@@ -404,11 +395,11 @@ class MCES_PY(GenericMethods):
     def re_prioritize(self,assigned,init_matchingoptions):
         
         if not bool(assigned):  # if the entering assigned dictionary is empty
-            print "An empty assignment dictionary entered in RePrioritize assigned; returning the original dictionary of assignment options"
+            print "An empty assignment dictionary entered in re_prioritize assigned; returning the original dictionary of assignment options"
             return init_matchingoptions # return the original candidate matching options
 
         elif len(assigned.keys())!=len(init_matchingoptions.keys()): # if the entering dictionary does not have an assignment option for all vertices
-            print "The assignment dictionary entering in RePrioritize does not match the original; returning the original dictionary of assignment options"
+            print "The assignment dictionary entering in re_prioritize does not match the original; returning the original dictionary of assignment options"
             return init_matchingoptions
         else:
             try:

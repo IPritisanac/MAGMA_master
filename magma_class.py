@@ -1,7 +1,9 @@
 #! /usr/bin/python
 
 """
-executes methods defined in mces.py (c) Iva Pritisanac | iva.pritisanac@gmail.com
+__author__: Iva Pritisanac
+
+executes methods defined in mces.py
 """
 
 import sys,os,copy
@@ -72,9 +74,9 @@ class Magma():
             sys.exit(1)        
         try: #    read in NMR files and generate appropriate graph (as specified by the input parameters)
             if P.include_ligand:
-                NMR = NMRData(P.HMQC_list,P.format_peak_list,P.labelled_residues,P.read_NOEs_from_file,P.NOE_list,P.format_NOE_list,P.dimensions_NOEs,P.read_extracted_NOEs,P.extracted_NOE_list,P.protein_ligand_noe_file,P.check_NOE_reciprocity,P.check_NOE_intensity,P.merge_NOEs,P.merge_LV_label,P.include_ligand_noes)
+                NMR = NMRData(P.labelled_residues,P.read_extracted_NOEs,P.extracted_NOE_list,P.protein_ligand_noe_file,P.check_NOE_reciprocity,P.merge_NOEs,P.merge_LV_label,P.include_ligand_noes)
             else:
-                NMR = NMRData(P.HMQC_list,P.format_peak_list,P.labelled_residues,P.read_NOEs_from_file,P.NOE_list,P.format_NOE_list,P.dimensions_NOEs,P.read_extracted_NOEs,P.extracted_NOE_list,"",P.check_NOE_reciprocity,P.check_NOE_intensity,P.merge_NOEs,P.merge_LV_label)
+                NMR = NMRData(P.labelled_residues,P.read_extracted_NOEs,P.extracted_NOE_list,"",P.check_NOE_reciprocity,P.merge_NOEs,P.merge_LV_label)
 
         except Exception, e:
             print "Error when creating instance of the class NMRData"
@@ -85,61 +87,59 @@ class Magma():
         dist_table_short,info_short,dist_matrix_short,mask_dist_short = PDB.interaction_network(positions,info,P.short_distance_threshold,P.dist_matrix,P.indx_file)
         dist_table_long,info_long,dist_matrix_long,mask_dist_long = PDB.interaction_network(positions,info,P.long_distance_threshold,P.dist_matrix,P.indx_file)
         
-        pdb_dict_short = PDB.GetConnectionDict(dist_table_short,info_short,False)
-        pdb_dict_long = PDB.GetConnectionDict(dist_table_long,info_long,False)
+        pdb_dict_short = PDB.get_connection_dict(dist_table_short,info_short,False)
+        pdb_dict_long = PDB.get_connection_dict(dist_table_long,info_long,False)
         
         if P.include_ligand:
             print "Adding ligand connections to the protein structure graph!"
             lig_dist_table,lig_info,lig_dist_matrix,lig_dist_mask=PDB.ligand_interaction_network(positions,extended_info,P.ligand_distance_threshold)
-        
-        
+                
         if P.merge_LV_label:
             print "Leucine and Valine labels are not known\nMerging..."
-            pdb_dict_short = PDB.TurnValToLeu(pdb_dict_short)
-            pdb_dict_long = PDB.TurnValToLeu(pdb_dict_long)
+            pdb_dict_short = PDB.turn_val_to_leu(pdb_dict_short)
+            pdb_dict_long = PDB.turn_val_to_leu(pdb_dict_long)
         else:
             print "Leucines and Valines labels are known!"       
         
         if P.include_ligand:
-            pdb_dict_lig = PDB.GetConnectionDict(lig_dist_table,lig_info,True)
-            pdb_dict_short= PDB.JoinLigandConnections(pdb_dict_short,pdb_dict_lig)
-            pdb_dict_long= PDB.JoinLigandConnections(pdb_dict_long,pdb_dict_lig)
-            short_node_list,short_adjacency = PDB.GetNodesAdjacency(pdb_dict_short,True,P.merge_proRS)
-            long_node_list,long_adjacency = PDB.GetNodesAdjacency(pdb_dict_long,True,P.merge_proRS)
+            pdb_dict_lig = PDB.get_connection_dict(lig_dist_table,lig_info,True)
+            pdb_dict_short= PDB.join_ligand_connections(pdb_dict_short,pdb_dict_lig)
+            pdb_dict_long= PDB.join_ligand_connections(pdb_dict_long,pdb_dict_lig)
+            short_node_list,short_adjacency = PDB.get_nodes_adjacency(pdb_dict_short,True,P.merge_proRS)
+            long_node_list,long_adjacency = PDB.get_nodes_adjacency(pdb_dict_long,True,P.merge_proRS)
         else:
-            short_node_list,short_adjacency = PDB.GetNodesAdjacency(pdb_dict_short,False,P.merge_proRS)
-            long_node_list,long_adjacency = PDB.GetNodesAdjacency(pdb_dict_long,False,P.merge_proRS)
+            short_node_list,short_adjacency = PDB.get_nodes_adjacency(pdb_dict_short,False,P.merge_proRS)
+            long_node_list,long_adjacency = PDB.get_nodes_adjacency(pdb_dict_long,False,P.merge_proRS)
         
-        NMR.CheckInputFormats()
-        NMR.InputDimensions()
-        NMR.SetNOEDict()
+        #NMR.CheckInputFormats()
+        #NMR.InputDimensions()
+        NMR.set_noe_dict()
         
         if P.include_ligand_noes:
-            noe_dict = NMR.JoinLigandConnections(NMR.noes,NMR.lig_noes)
-            noe_node_list,noe_adjacency = NMR.GetNodesAdjacency(noe_dict,True,P.merge_proRS)
+            noe_dict = NMR.join_ligand_connections(NMR.noes,NMR.lig_noes)
+            noe_node_list,noe_adjacency = NMR.get_nodes_adjacency(noe_dict,True,P.merge_proRS)
             return P.labelled_residues,noe_node_list,noe_adjacency,short_node_list,short_adjacency,True
         else:
-            noe_node_list,noe_adjacency = NMR.GetNodesAdjacency(NMR.noes,False,P.merge_proRS)
+            noe_node_list,noe_adjacency = NMR.get_nodes_adjacency(NMR.noes,False,P.merge_proRS)
             return P.labelled_residues,noe_node_list,noe_adjacency,short_node_list,short_adjacency,False
         
     def check_graphs(self,data_vertices,data_adjacency,struct_vertices,struct_adjacency,Gp,min_size):
         ##    remove disconnected nodes from the G1 - smaller graph
-        noe_node_list,noe_adjacency = Gp.RemoveDisconnectedNodes(data_vertices,data_adjacency)
+        data_vertices,data_adjacency = Gp.remove_disconnected_nodes(data_vertices,data_adjacency)
         try:
-            """
-            This bugs on ubiqutin! Check!!
-            """
-            data_vertices,data_adjacency = Gp.RemoveSmallSubgraphs(data_vertices,data_adjacency,min_size)
+            # //TO DO//this bugs occasionally! check!!
+            data_vertices,data_adjacency = Gp.remove_small_subgraphs(data_vertices,data_adjacency,min_size)
         except Exception,e:
-            print e
-            sys.exit(1)
+            print "Error in method remove_small_subgraphs (class Graph)%s"%(e)
+            print "Proceeding without removal"
+            #sys.exit(1)
             
         # basic graphs checks
-        small_graph = Gp.NetworkxGraph(data_vertices,data_adjacency)
-        big_graph = Gp.NetworkxGraph(struct_vertices,struct_adjacency)
-                
-        Gp.CheckGraphsSize(small_graph,big_graph)
-        Gp.CheckGraphsLabels(small_graph,big_graph)
+        small_graph = Gp.networkx_graph(data_vertices,data_adjacency)
+        big_graph = Gp.networkx_graph(struct_vertices,struct_adjacency)
+        
+        Gp.check_graphs_size(small_graph,big_graph)
+        Gp.check_graphs_labels(small_graph,big_graph)
         print "Basic NOE graph analysis:\n"
         print "N (nodes, NOE graph) = ",len(small_graph.nodes())
         print "N (edges, NOE graph) = ",len(small_graph.edges())
@@ -153,15 +153,15 @@ class Magma():
     
     def subgraph_isomorphism(self,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,Gp,tag):
         
-        graph_noe,graph_noe_indexing = Gp.IgraphGraph(noe_vertices,noe_adjacency)
-        graph_structure,graph_structure_indexing = Gp.IgraphGraph(structure_vertices,structure_adjacency)
+        graph_noe,graph_noe_indexing = Gp.igraph_graph(noe_vertices,noe_adjacency)
+        graph_structure,graph_structure_indexing = Gp.igraph_graph(structure_vertices,structure_adjacency)
         EP = IgraphSubIso() #    instance of a class for subgraph isomorphism check and extraction
         start_vf2 = time.time() # measure how long it takes for subgraph isomorphism to be evaluated
-        if EP.IgraphSubIsomorphism(graph_noe,graph_structure):
-            n_solutions = EP.IgraphCountSubIsomorphism(graph_noe,graph_structure)
+        if EP.igraph_subisomorphism(graph_noe,graph_structure):
+            n_solutions = EP.igraph_count_subisomorphism(graph_noe,graph_structure)
             print n_solutions
-            all_results = EP.IgraphListSubIsomorphism(graph_noe,graph_structure,graph_noe_indexing,graph_structure_indexing,[],[],noe_vertices,[],structure_vertices,[],[],False)
-            labels_result_dict=EP.IgraphSubIsomorphismWriteResult(self.outdir+os.sep+"vf2",str(tag),all_results,graph_noe_indexing,graph_structure_indexing)
+            all_results = EP.igraph_list_subisomorphism(graph_noe,graph_structure,graph_noe_indexing,graph_structure_indexing,[],[],noe_vertices,[],structure_vertices,[],[],False)
+            labels_result_dict=EP.igraph_subisomorphism_write_result(self.outdir+os.sep+"vf2",str(tag),all_results,graph_noe_indexing,graph_structure_indexing)
             #print "SI condition met for the entire NOE graph!\nN (explained NOEs) = ",len(small_graph.edges())
             end_vf2 = time.time()-start_vf2
             print "Took >> ", end_vf2, " sec to evaluate all subgraph isomorphisms"       
@@ -217,8 +217,8 @@ class Magma():
             tot_n_iter+=1
             for n in range(len(noe_vertices)):
                 # set as the first vertex each of the nmr (data) graph vertices
-                shuffled_noe_vertices = Gp.OptimalGraphOrderFromNode(noe_vertices[n],noe_vertices,noe_adjacency)
-                shuffled_noe_adjacency = Gp.ReOrderAdjecancy(shuffled_noe_vertices,noe_vertices,noe_adjacency)
+                shuffled_noe_vertices = Gp.optimal_graph_order_from_node(noe_vertices[n],noe_vertices,noe_adjacency)
+                shuffled_noe_adjacency = Gp.re_order_adjecancy(shuffled_noe_vertices,noe_vertices,noe_adjacency)
                 """
                 //TO CHECK//    deepcopying probably not neccessary below -- omit 
                 """
@@ -226,11 +226,11 @@ class Magma():
                 vertex_adjacencies.setdefault(copy.deepcopy(noe_vertices[n]),copy.deepcopy(shuffled_noe_adjacency))
                 if version=="c": # run c version of McGregor algorithm
                     MC=McGregor(shuffled_noe_vertices) # instantiate McGregor class given the current order of nmr graph vertices (shuffled_noe_vertices)
-                    MC.PrepareMcGregor(shuffled_noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
+                    MC.prepare_mcgregor(shuffled_noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
                     if optimise_mode=="y":  # 04/03/2017 -- the earlier name 'vanilla' mode
-                        iter_score,results = MC.McGregorLoop(False,False,1,False,max_time,False,0)
+                        iter_score,results = MC.mcgregor_loop(False,False,1,False,max_time,False,0)
                     else:
-                        iter_score,results = MC.McGregorLoop(False,True,n_prior_mces,True,max_time,False,0)
+                        iter_score,results = MC.mcgregor_loop(False,True,n_prior_mces,True,max_time,False,0)
                 if version=="py":
                     MP = MCES_PY(noe_vertices)
                     MP.prepare_mces_py(noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict)
@@ -247,7 +247,7 @@ class Magma():
                 #makeInputfile for mcesCore
                 if version=="c":
                     MC=McGregor(vertex_lists[best_start_vertex])    # start the search from this vertex, the bfs from that vertex, and adjacency ordered accordingly
-                    MC.PrepareMcGregor(vertex_adjacencies[best_start_vertex],structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
+                    MC.prepare_mcgregor(vertex_adjacencies[best_start_vertex],structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
                 if version=="py":
                     MP = MCES_PY(vertex_lists[best_start_vertex])
                     MP.prepare_mces_py(vertex_adjacencies[best_start_vertex],structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict)
@@ -257,20 +257,20 @@ class Magma():
                 print "Started the mapping search from >> ",best_start_vertex
                 sys.stdout.flush()
                 ##         
-                shuffled_noe_vertices = Gp.OptimalGraphOrderFromNode(noe_vertices[0],noe_vertices,noe_adjacency)
-                shuffled_noe_adjacency = Gp.ReOrderAdjecancy(shuffled_noe_vertices,noe_vertices,noe_adjacency)
+                shuffled_noe_vertices = Gp.optimal_graph_order_from_node(noe_vertices[0],noe_vertices,noe_adjacency)
+                shuffled_noe_adjacency = Gp.re_order_adjecancy(shuffled_noe_vertices,noe_vertices,noe_adjacency)
                 if version=="c":
                     MC=McGregor(shuffled_noe_vertices)
-                    MC.PrepareMcGregor(shuffled_noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
+                    MC.prepare_mcgregor(shuffled_noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
                 if version=="py":
                     MP=MCES_PY(shuffled_noe_vertices)
                     MP.prepare_mces_py(shuffled_noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict)
 
             if version=="c":
                 if(optimise_mode=="y"):
-                    iter_score,best_results = MC.McGregorLoop(False,True,n_prior_mces,True,max_time,False,0)
+                    iter_score,best_results = MC.mcgregor_loop(False,True,n_prior_mces,True,max_time,False,0)
                 else:
-                    iter_score,best_results = MC.McGregorLoop(False,True,n_prior_mces,True,10*max_time,False,0)
+                    iter_score,best_results = MC.mcgregor_loop(False,True,n_prior_mces,True,10*max_time,False,0)
                     
             if version=="py":
                 iter_score,best_results=MP.mcgregor_main(self.outdir+os.sep+"optimize_mces_step2_py.out",True,n_prior_mces,True,max_time,False)
@@ -307,7 +307,7 @@ class Magma():
 
             # after iterating over each starting vertex possibility, reorder candidates_dict according to the best_results   
             if version=="c":
-                candidates_dict = MC.RePrioritize(best_results,candidates_dict)
+                candidates_dict = MC.mc_reprioritize(best_results,candidates_dict)
             if version=="py":
                 candidates_dict = MP.re_prioritize(best_results,candidates_dict)
             
@@ -326,8 +326,8 @@ class Magma():
             return fin_candidates,fin_vertices,fin_adjacencies,start_time
         
         #else:
-        #    shuffled_noe_node_list = self.G.OptimalGraphOrderFromNode(best_start_node,noe_node_list,noe_adjacency)   # final NOE nodes list
-        #    shuffled_noe_adjacency = self.G.ReOrderAdjecancy(shuffled_noe_node_list,noe_node_list,noe_adjacency) #    final adjacency list
+        #    shuffled_noe_node_list = self.G.optimal_graph_order_from_node(best_start_node,noe_node_list,noe_adjacency)   # final NOE nodes list
+        #    shuffled_noe_adjacency = self.G.re_order_adjecancy(shuffled_noe_node_list,noe_node_list,noe_adjacency) #    final adjacency list
         #    return candidates_dict,shuffled_noe_node_list,shuffled_noe_adjacency
         
     ## on the basis of the data structures exiting the optimization step -- executes complete McGregor run
@@ -335,16 +335,16 @@ class Magma():
     def run_complete_mcgregor_c(self,candidates_dict,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,time_elapsed,tag,mces_mode="all"):
         
         MC = McGregor(noe_vertices)    # create an instance of McGregor class with the current list of vertices
-        MC.PrepareMcGregor(noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
+        MC.prepare_mcgregor(noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
         # define name of the output file
         outfile=self.outdir+os.sep+"mces_"+str(tag)+"_c.txt"
         
         if mces_mode=="one":
-            iter_score,best_results=MC.McGregorLoop(outfile,False,None,False,None,False,1)
+            iter_score,best_results=MC.mcgregor_loop(outfile,False,None,False,None,False,1)
             total_time = time.time()-time_elapsed
             print "Calculation took >> ", total_time, " to find 1 mces"
         elif mces_mode=="all":
-            iter_score,best_results=MC.McGregorLoop(outfile,True,None,False,None,False,1)
+            iter_score,best_results=MC.mcgregor_loop(outfile,True,None,False,None,False,1)
             total_time = time.time()-time_elapsed
             print "Calculation took >> ", total_time, " to find all mces"
         else:   # potentially unnecessary - checked by Parser
@@ -397,7 +397,9 @@ class Magma():
     ## splits NOE connections to separate files for separate connected components
     # @ retval noe_subgraphs - list of graph objects of networkx module
     def split_data_graph(self,noe_vertices,noe_adjacency,Gp):
-        noe_subgraphs = Gp.SplitConnectionsOverSubgraphs(noe_vertices,noe_adjacency)
+        
+        noe_subgraphs = Gp.split_connections_over_subgraphs(noe_vertices,noe_adjacency)
+        
         return noe_subgraphs
     
     ## takes graph object of networkx class and returns vertex list and nested adjacency list
@@ -405,13 +407,14 @@ class Magma():
     # @ retval subgraph_adjacency - nested list of nmr data subgraph vertex connectivity (adjacency)
     def get_subgraph_data(self,conn_subgraph,Gp):
         
-        subgraph_conn_dict = Gp.GetConnectionDict(conn_subgraph)
-        subgraph_vertices,subgraph_adjacency = Gp.GetNodesAdjacency(subgraph_conn_dict)
+        subgraph_conn_dict = Gp.get_conns_dict(conn_subgraph)
+        subgraph_vertices,subgraph_adjacency = Gp.get_nodes_adjacency(subgraph_conn_dict)
         
         return subgraph_vertices,subgraph_adjacency
 
     def analyse_magma_results(self):        
+        
         outfile=self.outdir+os.sep+"combined_result.res"
         print 'Writing combined results to: ',outfile
-        result_dict=analysis.AnalAll(self.outdir)
-        analysis.WriteResultDict(result_dict,outfile)
+        result_dict=analysis.analyse_all(self.outdir)
+        analysis.write_result_dict(result_dict,outfile)

@@ -43,15 +43,17 @@ class Graph(GenericMethods):
             # if ligand atoms are added to the graph
             # add an additional color label
             self.igraph_color_codes["X"]=len(residue_types)+1
-                
-    def RemoveDisconnectedNodes(self,nodes,adjecancy):
-        #    method to remove isolated nodes from NOE graph
-        #    isolated nodes are those nodes (methyls) in the NOE graph which are not connected through an edge (NOE) to any other nodes (methyls)
-        #    removal done both in the node list and in the corresponding adjacency simultaneously
+            
+    ##    method to remove isolated nodes from NOE graph
+    #    isolated nodes are those nodes (methyls) in the NOE graph which are not connected through an edge (NOE) to any other nodes (methyls)
+    #    removal done both in the node list and in the corresponding adjacency simultaneously                        
+    def remove_disconnected_nodes(self,nodes,adjecancy):
+       
         nodes_adj_dict = {nodes[n1]:set(adjecancy[n1]) for n1 in range(len(nodes))}        
-        node_orphans = [n1 for n1 in range(len(nodes)) if len(adjecancy[n1]) == 0]
-        new_node_list = [nodes[n] for n in range(len(nodes)) if n not in node_orphans]
+        node_orphans = [nodes[x] for x in range(len(nodes)) if len(adjecancy[x]) == 0]
+        new_node_list = [nodes[n] for n in range(len(nodes)) if nodes[n] not in node_orphans]
         new_adjecancy = [list(nodes_adj_dict[node]) for node in new_node_list]
+        
         return new_node_list,new_adjecancy
     
     def ReverseDictionary(self,dictionary):
@@ -61,31 +63,32 @@ class Graph(GenericMethods):
         else:
             raise Exception("Dictionary to reverse has different number of keys and values!")
     
-    def RemoveSmallSubgraphs(self,nodes,adjacency,minimal_size):
+    def remove_small_subgraphs(self,nodes,adjacency,minimal_size):
         # creates graph object of the networkx 
         # lists connected subgraphs
         # removed those that are smaller than the required minimal size
-        nxgraph = self.NetworkxGraph(nodes,adjacency)
+        nxgraph = self.networkx_graph(nodes,adjacency)
         connected_subgraphs = nx.connected_component_subgraphs(nxgraph)
-        subgraphs_dictionary = self.ClassifyComponents(connected_subgraphs)       
-        updated_nodes,updated_adjacency = self.RemoveComponents(subgraphs_dictionary,nodes,adjacency,minimal_size)        
+        subgraphs_dictionary = self.classify_components(connected_subgraphs)       
+        updated_nodes,updated_adjacency = self.remove_components(subgraphs_dictionary,nodes,adjacency,minimal_size)        
         return updated_nodes,updated_adjacency      
             
-    def RemoveComponents(self,subgraphs,node_list,adjacency_list,minimum):
-        #    given the minimum size (min_size) in number of nodes computes
+    ##    given the minimum size (min_size) in number of nodes extracts only components > that the minimum     
+    def remove_components(self,subgraphs,node_list,adjacency_list,minimum):
+        
         remove_nodes = []
         for size,subs in subgraphs.items():
+            #print size,subs
             if size <= minimum:
                 for subgraph in subs:
                     remove_nodes.extend(subgraph.nodes())
         
         print "Removing small graph components (N(nodes)) <= ", minimum
         print "..."
-        #print remove_nodes
         nodes_adj_dict = {node_list[n1]:set(adjacency_list[n1]) for n1 in range(len(node_list))}
-        new_node_list = [node for node in node_list if node not in remove_nodes]        
+        new_node_list = [node for node in node_list if node not in remove_nodes]
         new_adjacency = [list(nodes_adj_dict[node]) for node in new_node_list] 
-               
+        
         return new_node_list,new_adjacency                   
     
     def CreateAssignmentMatrix(self,quantitative_candidates_dict):
@@ -225,14 +228,14 @@ class Graph(GenericMethods):
             munkres_candidates.setdefault(reverse_rows[indx_row],reverse_columns[indx_column])
         return munkres_candidates    
         
-    def ClassifyComponents(self,subgraphs):
+    def classify_components(self,subgraphs):
         subgraphs_dict = {}    
         for s in range(len(subgraphs)):
             #print subgraphs[s].nodes()
             subgraphs_dict.setdefault(len(subgraphs[s].nodes()),[]).append(subgraphs[s])
         return subgraphs_dict   
                                         
-    def NetworkxGraph(self,node_list,adjacency_list):        
+    def networkx_graph(self,node_list,adjacency_list):        
         graph = nx.Graph()
         graph_edges = [(node_list[i],e) for i in range(len(node_list)) for e in adjacency_list[i]]
         # if unconnected nodes need to be kept in
@@ -249,8 +252,8 @@ class Graph(GenericMethods):
         connected_subgraphs = nx.connected_component_subgraphs(graph)
         return connected_subgraphs
 
-    def SplitConnectionsOverSubgraphs(self,nodes,adjacency,file_names = "splitted_connected_graph_"): 
-        nx_graph = self.NetworkxGraph(nodes,adjacency)
+    def split_connections_over_subgraphs(self,nodes,adjacency,file_names = "splitted_connected_graph_"): 
+        nx_graph = self.networkx_graph(nodes,adjacency)
         conn_subgraphs = self.NxGetComponentsAsSubgraphs(nx_graph)        
         
         #for g in range(len(conn_subgraphs)):
@@ -339,7 +342,7 @@ class Graph(GenericMethods):
             nodes_list.extend(extension)
         return nodes_list
    
-    def IgraphGraph(self,nodes,adjacency):
+    def igraph_graph(self,nodes,adjacency):
               
         if self.label_flag == "type":
             igraph_edges = [(i,nodes.index(e)) for i in range(len(nodes)) for e in adjacency[i]]
@@ -408,14 +411,14 @@ class Graph(GenericMethods):
         return reduced_node_list,reduced_adjacency
       
     def CommunityStructure(self,nodes,adjacency):
-        igraph,index_igraph = self.IgraphGraph(nodes,adjacency)
+        igraph,index_igraph = self.igraph_graph(nodes,adjacency)
         community = ig.GraphBase.community_leading_eigenvector(igraph)
         community_dict = {}
         for i in range(len(community[0])):           
             community_dict.setdefault(community[0][i],[]).append(index_igraph[i])
         return community_dict    
     
-    def ReOrderAdjecancy(self,order,old_order,old_adjacency):
+    def re_order_adjecancy(self,order,old_order,old_adjacency):
         # Reorders the original adjacency list according to the new node order
         new_adjecancy = []
         for n in range(len(order)):
@@ -432,7 +435,7 @@ class Graph(GenericMethods):
             dict1[key] = restrict_value
         return dict1        
     
-    def OptimalGraphOrderFromNode(self,start_node,nodes,adjacency):
+    def optimal_graph_order_from_node(self,start_node,nodes,adjacency):
         # given the graph structure and the starting node (source), tries to create best order of vertices to visit
        
         edges = [(nodes[i],n) for i in range(len(nodes)) for n in adjacency[i]] # get edges from adjacency
@@ -461,7 +464,7 @@ class Graph(GenericMethods):
         #     >>    at the node with highest degree
         #     >>    continues through its connections (ordering them based on their degree)
         communities = self.CommunityStructure(nodes,adjacency)
-        nxgraph = self.NetworkxGraph(nodes,adjacency)        
+        nxgraph = self.networkx_graph(nodes,adjacency)        
         ranked_communities = [(members,len(members)) for community,members in communities.items()]
         final_communities = self.RankCommunityMembers(nxgraph, ranked_communities)
         node_order = [m[0] for member in final_communities for m in member]
@@ -524,7 +527,7 @@ class Graph(GenericMethods):
             label_candidates.setdefault(node,candidate_assign)
         return label_candidates
         
-    def GetConnectionDict(self,nxgraph):
+    def get_conns_dict(self,nxgraph):
         conn_dict = {}
         if len(nxgraph.edges()) > 0:
             for edge in nxgraph.edges():
@@ -539,7 +542,7 @@ class Graph(GenericMethods):
         all_nodes = neighbors + [node]  #get allnodes for which subgraph should be extracted
 
         subgraph = nx.subgraph(graph,all_nodes)
-        subconn_dict = self.GetConnectionDict(subgraph)
+        subconn_dict = self.get_conns_dict(subgraph)
         sub_nodes,sub_adjacency = self.GetUnsortedNodesAdjacency(subconn_dict)        
         return sub_nodes,sub_adjacency
 
@@ -548,15 +551,15 @@ class Graph(GenericMethods):
         all_nodes = all_hop_nodes + [node]  #get allnodes for which subgraph should be extracted
         all_nodes = list(set(all_nodes))
         subgraph = nx.subgraph(graph,all_nodes)
-        subconn_dict = self.GetConnectionDict(subgraph)
+        subconn_dict = self.get_conns_dict(subgraph)
         sub_nodes,sub_adjacency = self.GetUnsortedNodesAdjacency(subconn_dict)        
         return sub_nodes,sub_adjacency
 
     def SubgraphIsoFiltering(self,nodes1,adjacency1,nodes2,adjacency2):
         filtered_assignment_candidates = {}        
         assign_candidates = self.LabelCompatible(nodes1, nodes2)        
-        total_graph1 = self.NetworkxGraph(nodes1,adjacency1)
-        total_graph2 = self.NetworkxGraph(nodes2,adjacency2)
+        total_graph1 = self.networkx_graph(nodes1,adjacency1)
+        total_graph2 = self.networkx_graph(nodes2,adjacency2)
         
         for root1,assignments in assign_candidates.items():
             nodes_subgraph1, adjacency_subgraph1 = self.ExtractSubgraph(total_graph1,root1)
@@ -565,7 +568,7 @@ class Graph(GenericMethods):
                 nodes_subgraph2,adjacency_subgraph2 = self.ExtractSubgraph(total_graph2,assignment)
                 graph2,graph_index2 = self.IgraphFilteringGraph(nodes_subgraph2,adjacency_subgraph2,assignment)
                 SIso = IgraphSubIso()
-                if SIso.IgraphSubIsomorphism(graph2,graph1):
+                if SIso.igraph_subisomorphism(graph2,graph1):
                     #print root1,">>",assignment, "isomorphic!"
                     filtered_assignment_candidates.setdefault(root1,[]).append(assignment)
                 else:
@@ -575,8 +578,8 @@ class Graph(GenericMethods):
     def SubgraphIsokHopsFiltering(self,nodes1,adjacency1,nodes2,adjacency2,k_hops):
         filtered_assignment_candidates = {}        
         assign_candidates = self.LabelCompatible(nodes1,nodes2)        
-        total_graph1 = self.NetworkxGraph(nodes1,adjacency1)
-        total_graph2 = self.NetworkxGraph(nodes2,adjacency2)
+        total_graph1 = self.networkx_graph(nodes1,adjacency1)
+        total_graph2 = self.networkx_graph(nodes2,adjacency2)
         
         for root1,assignments in assign_candidates.items():
             nodes_subgraph1, adjacency_subgraph1 = self.ExtractSubgraphkHops(total_graph1,root1,k_hops)
@@ -585,7 +588,7 @@ class Graph(GenericMethods):
                 nodes_subgraph2,adjacency_subgraph2 = self.ExtractSubgraphkHops(total_graph2,assignment,k_hops)
                 graph2,graph_index2 = self.IgraphFilteringGraph(nodes_subgraph2,adjacency_subgraph2,assignment)
                 SIso = IgraphSubIso()
-                if SIso.IgraphSubIsomorphism(graph2,graph1):
+                if SIso.igraph_subisomorphism(graph2,graph1):
                     filtered_assignment_candidates.setdefault(root1,[]).append(assignment)
                 else:
                     continue
@@ -638,7 +641,7 @@ class Graph(GenericMethods):
             dictionary[key] = new_value
         return dictionary
     
-    def CheckGraphsSize(self,G1,G2):
+    def check_graphs_size(self,G1,G2):
         #    requirement of this algorithm is that |G1| <= |G2|; i.e. the number of vertices of G1 is smaller or equal to that of G2
         #    every node of G1 must be mapped to a node in G2
         #    "every node in G1 must be included in the correspondence"
@@ -650,7 +653,7 @@ class Graph(GenericMethods):
             print sorted([n[-1] for n in G2.nodes()])
             raise Exception("ERROR: |G1| must be <= |G2|!")
                             
-    def CheckGraphsLabels(self,G1,G2):
+    def check_graphs_labels(self,G1,G2):
         G1_node_labels = [node[-1] for node in G1.nodes()]
         G2_node_labels = [node[-1] for node in G2.nodes()]
         label_set1 = sorted((G1_node_labels))
@@ -679,8 +682,9 @@ class Heuristic(Graph):
     # real value overlap assign to position in matrix
     # HungarianMaximize (matrix)   
     def hungarian_first_order(self,noe_nodes,noe_adjacency,pdb_nodes,pdb_adjacency,compatibility_dict,hops=1):
-        noe_dict = self.GetConnectionDictFromAdj(noe_nodes,noe_adjacency)
-        pdb_dict = self.GetConnectionDictFromAdj(pdb_nodes,pdb_adjacency)
+        
+        noe_dict = self.get_conns_dict_from_adj(noe_nodes,noe_adjacency)
+        pdb_dict = self.get_conns_dict_from_adj(pdb_nodes,pdb_adjacency)
         types_noe = self.SortDictType(noe_dict)
         types_pdb = self.SortDictType(pdb_dict)
         #if len(types_noe.keys())>len(types_pdb.keys()):    # crashes calculation at short distance thresholds
@@ -785,16 +789,8 @@ class Heuristic(Graph):
             reverse_weight_dict.setdefault(all_weights[i],[]).append(i)
                    
         nmr_graph_traversal = self.BestGraphTraversal(reverse_weight_dict,association_nodes,nmr_node_list,pdb_node_list)
-        nmr_new_adjacency = self.ReOrderAdjecancy(nmr_graph_traversal,nmr_node_list,nmr_adjacency)
-        """
-        get association graph nodes
-        get association graph links (edges)
-        
-        call shortest path algorithm (all nodes of association graph to all other nodes of association graph)
-        turn paths into weights
-        sum the weights
-        determine the order/candidate dict                
-        """
+        nmr_new_adjacency = self.re_order_adjecancy(nmr_graph_traversal,nmr_node_list,nmr_adjacency)
+                            
         return nmr_graph_traversal,nmr_new_adjacency
         
     def BestGraphTraversal(self,weights,anodes,nodes1,nodes2):

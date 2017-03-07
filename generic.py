@@ -1,3 +1,9 @@
+"""
+__author__: Iva Pritisanac
+
+some generic methods used by several other classes (PDBData, NMRData, McGregor, MCES_PY,etc)
+"""
+
 import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -36,25 +42,11 @@ class GenericMethods(object):
         return new_node_labels, new_adjacency              
         
         
-    def GetNodesAdjacency(self,contact_dict,lig_flag=False,merge_proRS=True): #  lig_flag and merge_proRS -- not needed
+    def get_nodes_adjacency(self,contact_dict,lig_flag=False,merge_proRS=True): #  lig_flag and merge_proRS -- not needed
         
         node_list = [key for key in contact_dict.keys()] #,key = lambda x:int(x[:-1]))]
         adjecancy = [list(set(contact_dict[node_list[n]])) for n in range(len(node_list))]
         
-        """
-        if merge_proRS:
-            node_list = [key for key in sorted(contact_dict.keys())] #,key = lambda x:int(x[:-1]))]
-            adjecancy = [list(set(contact_dict[n])) for n in node_list]
-
-        if not merge_proRS or lig_flag:
-            node_list = [key for key in contact_dict.keys()] #,key = lambda x:int(x[:-1]))]
-            adjecancy = [list(set(contact_dict[node_list[n]])) for n in range(len(node_list))]
-
-        #if lig_flag:
-            # collect node list and adjacency for all non ligand atoms
-            #node_list = [key for key in sorted(contact_dict.keys())]
-            #adjecancy = [list(set(contact_dict[node_list[n]])) for n in range(len(node_list))]
-        """
         return node_list,adjecancy   
     
     def GetUnsortedNodesAdjacency(self,contact_dict):
@@ -62,12 +54,8 @@ class GenericMethods(object):
         adjecancy = [list(set(contact_dict[n])) for n in node_list]
         return node_list,adjecancy    
 
-    def GetNodesAdjacencyDirect(self,contact_dict):
-        node_list = [key for key in sorted(contact_dict.keys(),key = lambda x:int(x[1:]))]
-        adjecancy = [list(set(contact_dict[n])) for n in node_list]
-        return node_list,adjecancy
     
-    def GetConnectionDictFromAdj(self,nodelist,adjacency):
+    def get_conns_dict_from_adj(self,nodelist,adjacency):
         # given node list and adjacency
         # returns dictionary where keys are nodes and values are nodes connected to the key (node)
         conn_dict = {}
@@ -109,7 +97,7 @@ class GenericMethods(object):
                 assign_candidates_dict[key] = known_assignments[key]
         return assign_candidates_dict
         
-    def JoinLigandConnections(self,protein_dict,ligand_dict):
+    def join_ligand_connections(self,protein_dict,ligand_dict):
         # join the values of the common keys between ligand and protein dictionaries
         # add the keys that do not exist in the protein dictionary to the protein dictionary        
         for key,value in ligand_dict.items():

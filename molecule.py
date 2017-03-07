@@ -1,4 +1,5 @@
 """
+__author__: Matteo Degiacomi
 PDB file loading and manipulation. Extracted from BioBOx, (c) Matteo Degiacomi
 """
 

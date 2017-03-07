@@ -1,3 +1,9 @@
+"""
+__authors__: Iva Pritisanac and Matteo Degiacomi
+
+Input files loading and manipulation; relies on classes Parser, Molecule and Generic Methods
+"""
+
 from generic import GenericMethods
 import re,sys,os
 from molecule import Molecule
@@ -8,11 +14,13 @@ import scipy.spatial.distance as S
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+## wrapper class that inherits all the methods of a class Parser
+#the class also inherits the constructor of the Parser
+## Parser allows the extraction of keywords from an input text file 
+#input text file should contain a keyword per line, followed by one or more parameters (separated from the keyword by a tab)
+
 class ParseInput(Parser):
-    #wrapper class that inherits all the methods of a class Parser
-    #the class also inherits the constructor of the Parser
-    ##Parser allows the extraction of keywords from an input text file 
-    #input text file should contain a keyword per line, followed by one or more parameters (separated from the keyword by a tab)
+    
     def __init__(self):
         
         super(ParseInput,self).__init__()
@@ -23,15 +31,11 @@ class ParseInput(Parser):
         self.add('short_distance_threshold','short_distance_threshold','float',10.00)
         self.add('long_distance_threshold','long_distance_threshold','float',15.00)
         self.add('distance_type','distance_type','str','carbon')
-        #self.add("rescore_threshold","rescore_thresh","float",8.0)
+    
         self.add("distance_matrix","dist_matrix","str","")
         self.add("index_file","indx_file","str","")
 
-        self.add('HMQC_list','HMQC_list','str',"")
-        self.add('format_peak_list','format_peak_list','str',"")
-        self.add('labelled_residues','labelled_residues','array str',[""])
-        self.add('read_NOEs_from_file','read_NOEs_from_file','str',"")
-        self.add('NOE_list','NOE_list','str',"")
+        self.add('labelled_residues','labelled_residues','array str',[""])    
         self.add('format_NOE_list','format_NOE_list','str',"")
         self.add('dimensions_NOEs','dimensions_NOEs','int',-1)
         self.add('read_extracted_NOEs','read_extracted_NOEs','str',"off")
@@ -43,9 +47,7 @@ class ParseInput(Parser):
         
         self.add("run_subgraph_isomorphism","check_subgraph_iso","str","on")
         self.add("priority_iterations","prior_iter","int",20)
-        self.add("N_priority_MCES","n_prior_mces","int",3)
-        self.add('output_file_McGregor','outfile_McGregor','str',"")
-        self.add('output_file_vf2','outfile_vf2','str',"")               
+        self.add("N_priority_MCES","n_prior_mces","int",3)              
         
         self.add('merge_NOEs','merge_NOEs','str',"")
         self.add('merge_proRS','merge_proRS','str',"")
@@ -53,11 +55,8 @@ class ParseInput(Parser):
         self.add("maximum_run_time", "max_run_time","int","")
         self.add('min_size','min_size','int',3)
         self.add('mode','mode','str',"complete_subgraphs")
-        self.add('run_at','run_at','str',"short")
         self.add("mces_mode","mces_mode","str","all")
 
-        #self.add("craicMode","craicMode","str","all")
-        #self.add("craicFile","craicFile","str","all")
         self.add("strip_mode","strip_mode","str","on")
 
         self.add("include_ligand","include_ligand",'str',"off")
@@ -77,9 +76,6 @@ class ParseInput(Parser):
         else:
             raise Exception("For 'use_pdb_file' expected 'on' or 'off', got %s instead"%(self.pdb_flag))
         
-        if self.pdb_file == "":
-            raise Exception("pdb file must be defined!")
-
         if os.path.isfile(self.pdb_file) == False:
             raise Exception("pdb file does not exist or the path to the file is incorrect!")
 
@@ -108,13 +104,13 @@ class ParseInput(Parser):
             """
             //Default could be set instead of raising an exception
             """
-            raise Exception("short distance threshold for the calculation is not provided ")
+            raise Exception("Distance threshold for the calculation is not provided ")
             
-        if self.long_distance_threshold == "":
-            """
-            //Default could be set instead of raising an exception
-            """
-            raise Exception("long distance threshold for the calculation is not provided ")
+        #if self.long_distance_threshold == "":
+            #"""
+            #//Default could be set instead of raising an exception
+            #"""
+            #raise Exception("long distance threshold for the calculation is not provided ")
         
         if (self.distance_type!="carbon") and (self.distance_type!="proton"):
             raise Exception("Distance type can be either 'carbon' or 'proton'. Instead got %s"%self.distance_type)
@@ -122,57 +118,20 @@ class ParseInput(Parser):
         if self.distance_type=="":
             raise Exception("Please define between which methyl atoms distance matrix should be computed: 'proton' or 'carbon'")
         
-        #if self.rescore_thresh == "":
-            #print "No rescore against different distance threshold chosen!"
-            #raise Exception("No rescore against different distance threshold chosen!")
         
         if self.short_distance_threshold > self.long_distance_threshold:
             raise Exception("short and long distance thresholds might have been swapped!\ncheck short/long distance thresholds!")
-        
-        if self.HMQC_list == "":
-            raise Exception("peak/HMQC list must be given!")
-        
-        if os.path.isfile(self.HMQC_list) == False:
-            raise Exception("peak list file (HMQC peak list) does not exist or the path to the file is incorrect!")
-        
+                
         if len(self.labelled_residues) == 0:
             raise Exception("no methyl labelled residues selected!\n list residues with methyl labels!")
         
         if sorted(self.labelled_residues) != sorted(self.residues):
             raise Exception("methyl labels from PDB file do not match with the NMR input?\n make sure that list 'residues' and list 'labelled residues' match!")
         
-        if self.format_peak_list not in ["sparky"]:
-            raise Exception("only sparky input format of the HMQC peak list is currently supported!")
         
-        if self.read_NOEs_from_file!= "on" and self.read_NOEs_from_file!="off":
-            raise Exception("incorrect entry for 'read_NOE_from_file' ! Expected on or off; instead got %s"%self.read_NOEs_from_file)
-                
-        if self.read_NOEs_from_file == "on" and self.read_extracted_NOEs == "on":
-            raise Exception("incorrect entries for 'read_NOE_from_file' and/or 'self.read_extracted_NOEs'! Only one of the two NOE modes can be on!")
-
-        if self.read_NOEs_from_file == "on" and os.path.isfile(self.NOE_list)== False:
-            raise Exception("'read_NOEs_from_file' is on, however 'NOE_list' file does not exist or the path to the file is incorrect!")
-                    
-        if self.read_NOEs_from_file == "on" and self.NOE_list == "":
-            raise Exception("if read_NOEs_from_file is on, 'NOE_list' file must be given!")
-        
-        if os.path.isfile(self.NOE_list)== False:
+        if os.path.isfile(self.extracted_NOE_list)== False:
             raise Exception("NOE file does not exist or the path to the file is incorrect!")
-        
-        if self.read_NOEs_from_file == "on":
-            self.read_NOEs_from_file = True
-        else:
-            self.read_NOEs_from_file = False
-        
-        if self.read_NOEs_from_file and self.format_NOE_list not in ["sparky"]:
-            raise Exception("only sparky input format of the NOE list is supported!")
-        
-        if self.dimensions_NOEs == -1:
-            raise Exception("number of dimensions of the NOESY experiment not given!")
-        
-        if self.dimensions_NOEs != 3 and self.dimensions_NOEs != 4:
-            raise Exception("incorrect number of dimensions in the NOE file given! Expected 3 or 4; instead got %s"%self.dimensions_NOEs)
-        
+                
         if self.read_extracted_NOEs != "off" and self.read_extracted_NOEs !="on":
             raise Exception("incorrect entry for 'read_NOE_directly' ! Expected on or off; instead got %s"%self.read_extracted_NOEs)
                     
@@ -186,28 +145,11 @@ class ParseInput(Parser):
             self.read_extracted_NOEs = True
         else:
             self.read_extracted_NOEs = False
-        
-        if not self.read_extracted_NOEs and not self.read_NOEs_from_file:
-            raise Exception("One of 'read_extracted_NOEs' or 'read_NOEs_from_file' needs to be on!")
-                        
-        if self.check_NOE_reciprocity != "" and self.check_NOE_reciprocity != "on" and self.check_NOE_reciprocity != "off":
-            raise Exception("incorrect entry for 'check_NOE_reciprocity'; expected 'on' or 'off'; instead got %s"%self.check_NOE_reciprocity)
-        
-        if self.check_NOE_intensity != "" and self.check_NOE_intensity != "on" and self.check_NOE_intensity != "off":
-            raise Exception("incorrect entry for 'check_NOE_intensity'; expected 'on' or 'off'; instead got %s"%self.check_NOE_intensity)
-        
+                
         if self.check_NOE_reciprocity == "on":
             self.check_NOE_reciprocity = True
-        elif self.check_NOE_reciprocity == "off":
-            self.check_NOE_reciprocity = False   
-        
-        if self.check_NOE_intensity == "on":
-            self.check_NOE_intensity = True
-        elif self.check_NOE_intensity == "off":
-            """Default currently >> off"""
-            self.check_NOE_intensity = False
         else:
-            raise Exception("Incorrect entry for check_NOE_intensity, expected 'on' or 'off'. Instead got %"%self.check_NOE_intensity)
+            self.check_NOE_reciprocity = False   
         
         if self.include_ligand_noes=="on":
             self.include_ligand_noes = True
@@ -218,15 +160,7 @@ class ParseInput(Parser):
         
         if self.include_ligand_noes and not os.path.isfile(self.protein_ligand_noe_file):
             raise Exception("'include_ligand_noes' is on, however 'protein_ligand_noe_file' file does not exist or the path to the file is incorrect!")
-                    
-        if self.outfile_McGregor == "":
-            self.outfile_McGregor = "output_MCES_run.txt"
-            #raise Exception("file for results of McGregor MCES search does not exist or the path to the file is incorrect!")
-        
-        if self.outfile_vf2 == "":
-            self.outfile_vf2 = "output_subgraph_isomorphism_vf2_run.txt"
-            #raise Exception("file for results of vf2 subgraph isomorphism search does not exist or the path to the file is incorrect!")
-       
+                           
         if self.check_subgraph_iso=="on":
             self.check_subgraph_iso = True
         elif self.check_subgraph_iso=="off":
@@ -260,21 +194,6 @@ class ParseInput(Parser):
                               
         if self.mode not in ["all_subgraphs", "connected_subgraphs","residue_subgraphs"]:
             raise Exception("mode keyword should be all_subgraphs, connected_subgraphs or residue_subgraphs. Instead found: %s"%self.mode)
-
-        """
-        //SET proper defaults and checks for this//        
-        if self.strip_mode == "on":   # is set to on or a default applies
-            self.strip_mode = "on"
-        elif self.strip_mode == "off":
-            self.strip_mode = None
-        else:
-            raise Exception("incorrect entry for 'strip_mode'; expected 'on' or 'off', instead got %s"%(self.strip_mode))
-        """
-        if self.run_at == "":
-            raise Exception("distance threshold for the calculation must be defined!/n set 'run_at' to either 'short' or 'long'")
-        
-        if (self.run_at!="short") and (self.run_at!="long"):
-            raise Exception("incorrect entry for'run_at'; expected 'short' or 'long', instead got %s"%(self.run_at))
         
         if self.prior_iter == "":
             raise Exception("number of iterations for priority calculation must be defined!")
@@ -328,15 +247,8 @@ class PDBData(GenericMethods):
         # start empty data structures
         self.all_res_information = {}
         
-    def CheckInputFiles(self):
-        #   method checks that all required input files exist    
-        pass
-    
-    def CheckInputFormats(self):
-        #   method checks that all input files are in correct format 
-        pass
            
-    def PDBHandle(self):
+    def pdb_handle(self):
         #    check whether pdb file exists and create object of class Molecule
         #    return this object or exit the program        
         self.input_chains= list(self.input_chains)        
@@ -345,9 +257,8 @@ class PDBData(GenericMethods):
             M.import_pdb(self.input_file)
         except:
             raise Exception('ERROR: file %s not found!'% self.input_file)
-            #print "File %s not found!"  % self.input_file
-            #print 'Exiting program ...'
-            #sys.exit()
+            print 'Exiting program ...'
+            sys.exit(1)
         return M       
         
     def extract_positions_indices(self,flag):  
@@ -357,7 +268,7 @@ class PDBData(GenericMethods):
         if not flag:    # if information is read in from a different, suitably formated file
             return None,None
         
-        mol = self.PDBHandle()        
+        mol = self.pdb_handle()        
         print "> protein loaded, loading aminoacids!"
         
         if self.dist_between == "proton":
@@ -435,7 +346,7 @@ class PDBData(GenericMethods):
                     idx_val=mol.atomselect(self.input_chains,"VAL","CA",use_resname=True, get_index=True)[1]
                     info_val=mol.properties['data'][idx_val,2:6]
                     print ">> merging ProR and ProS carbons to pseudoatom"
-                    pos_val=self.GetAveragePos(mol,idx_val,["CG1","CG2"])
+                    pos_val=self.get_average_pos(mol,idx_val,["CG1","CG2"])
                     print ">> valine done!",pos_val.shape
                     self.all_res_information.setdefault('VAL',(pos_val,info_val))
                 else:
@@ -468,7 +379,7 @@ class PDBData(GenericMethods):
                     idx_leu=mol.atomselect(self.input_chains,"LEU","CA",use_resname=True, get_index=True)[1]
                     info_leu=mol.properties['data'][idx_leu,2:6]
                     print ">> merging ProR and ProS carbons to pseudoatom"
-                    pos_leu=self.GetAveragePos(mol,idx_leu,["CD1","CD2"])
+                    pos_leu=self.get_average_pos(mol,idx_leu,["CD1","CD2"])
                     print ">> leucine done!",pos_leu.shape
                     self.all_res_information.setdefault('LEU',(pos_leu,info_leu))
                 else:
@@ -528,7 +439,7 @@ class PDBData(GenericMethods):
         
         return all_pos,all_info,all_info[:,1:]
     
-    def GetAveragePos(self,mol,idx,atoms):
+    def get_average_pos(self,mol,idx,atoms):
         #compute average position for atoms part of a residue identified by a specific index
         # M=molecule, idx=list of indices of atoms (in different resid), atoms=2 atoms to look for in residues of interest)    
         pos_tmp=[]
@@ -646,14 +557,8 @@ class PDBData(GenericMethods):
         
         return newtable,info,dist_mat,masked_distances
     
-    def WriteIndices(self,atom_info,filename):
-        fout = open(filename,"w")
-        for i in range(len(atom_info)):
-            #print i,atom_info[i][0]
-            fout.write("%s\t%s\t%s\t%s\n"%(i,atom_info[i][0],atom_info[i][1],atom_info[i][2]))
-        fout.close()
     
-    def GetConnectionDict(self,test_table,all_atoms,ligand_conns=False):
+    def get_connection_dict(self,test_table,all_atoms,ligand_conns=False):
         # given the table of pairs (atoms connected through space within distance threshold >> see self.InteractionNetwork
         # extract the pairs into dictionary where key is an atom and value is a list of atoms key is connected to
         # in case some atoms from all_atoms are not paired with any other one
@@ -706,31 +611,8 @@ class PDBData(GenericMethods):
                 conn_dict_pdb[a] = []
                 
         return conn_dict_pdb
-    
-    def GetConnectionDictDist(self,test_table,all_atoms):
-        # given the table of pairs (atoms connected through space within distance threshold >> see self.interaction_network
-        # extract the pairs into dictionary where key is an atom and value is a list of atoms key is connected to
-        # return connection dictionary in which for each connection, distance is specified as well
-        conn_dict_pdb = {}
-        for row in test_table:
-            conn = row[0].split('_')
-            conn1 = conn[0][3:] + conn[0][0]
-            conn2 = conn[1][3:] + conn[1][0]
-            conn_dict_pdb.setdefault(conn1,[]).append((conn2,float(row[3])))
-            conn_dict_pdb.setdefault(conn2,[]).append((conn1,float(row[3])))
-        for key,value in conn_dict_pdb.items():
-            newval = set(value)
-            conn_dict_pdb[key] = list(newval)
-        return conn_dict_pdb    
-    
-    def WriteDistanceFile(self,conn_dict,filename):
-        fout = open(filename,"w")
-        for atom,conns in conn_dict.items():
-            for c in conns:
-                fout.write("%s\t%s\t%s\n"%(atom,c[0],c[1]))
-        fout.close() 
-                    
-    def PrettyPlotContacts(self,table,positions,distance_matrix,mask_dist,thresh):
+                        
+    def pretty_plot_contacts(self,table,positions,distance_matrix,mask_dist,thresh):
         #data for pretty plot here!!!
         d=[]
         for line in table:
@@ -753,7 +635,7 @@ class PDBData(GenericMethods):
         plt.colorbar()
         plt.show()
             
-    def TurnValToLeu(self,conn_dict):
+    def turn_val_to_leu(self,conn_dict):
         #    if valine and leucines are not discriminated
         #    turns all valine labels to leucine labels
         relabelled_conn_dict = {}
@@ -780,130 +662,63 @@ class NMRData(GenericMethods):
     #hmqc file is a three column file with resonance id in first column, 13C and 1H frequencies in 2nd and 3rd, respectively
     #hmqc file can be an empty file, as the methyl resonances with no NOEs are excluded from the data graph definition
     #different file formats will be supported in the futures, as indicated below    
-    def __init__(self,input_peak_list,input_list_format,input_labelled_residues,input_noe,input_noe_list,input_noe_format,dimensions,read_extracted_NOEs,extracted_NOEs,ligand_noe_file,reciprocity=True,intensity=False,mergeLV=True,mergeLVlabel=False,ligand_noes=False):
+    def __init__(self,input_labelled_residues,read_extracted_NOEs,extracted_NOEs,ligand_noe_file,reciprocity=True,mergeLV=True,mergeLVlabel=False,ligand_noes=False):
         
-        self.input_peak_list = input_peak_list
-        self.input_list_format = input_list_format
+        
         self.input_peak_residues = input_labelled_residues
-        self.input_noe = input_noe
-        self.input_noe_list = input_noe_list
-        self.input_noe_format = input_noe_format
-        self.noesy_dimension = dimensions
-        
+                
         self.read_extracted_NOEs = read_extracted_NOEs
         self.extracted_NOEs = extracted_NOEs
         self.check_recip = reciprocity
-        self.check_intensity = intensity    
+        #self.check_intensity = intensity    
         self.merge = mergeLV
         self.merge_label_LV = mergeLVlabel
         
         self.ligand_noes = ligand_noes
         self.ligand_noe_file = ligand_noe_file
         
-        self.methyl_IDs = [type[0] for type in self.input_peak_residues]
-        self.peaks = []   
-         
-    def CheckInputFormats(self):
-        """
-        //TO DO//
-        """
-        #   method checks that all input files are in correct format 
-        #    sets class variables that will be used by NOE reading and checking methods
-        if self.input_noe_format == 'sparky':
-            '''
-            // TO DO    //
-            >>    check dimensions
-            >>    order of dimensions
-            >>    consistency with file format
-            >>    N of columns and input therein
-            >>    any lines that do not contain noes
-           
-            >>    set appropriate class variables which will be used by NOE reading method
-            '''            
-            # here MAKE SURE THAT The input format holds >> last two columns must be Intensity[-2] and S/N[-1]
-            #IF ENTIRE FORMAT CHECKED ABOVE, all should hold though!
-            pass
-        elif self.input_noe_format == 'vnmr':
-            '''
-            // TO DO
-            self.ConvertToSparkyFormat('vnmr')
-            '''
-            pass
-        elif self.input_noe_format == 'xeasy':
-            '''
-            // TO DO
-            self.ConvertToSparkyFormat('xeasy')
-            '''
-            pass
-        else:
-            print 'ERROR! In input NMR files'
-            print '>> Unrecognized or mistyped NOE list format provided, please choose one of the supported formats'
-            sys.exit(0)      
+        self.methyl_IDs = [typ[0] for typ in self.input_peak_residues]
         
-    def SetGivenInput(self):
+        self.peaks = []
+             
         
-        #if self.input_peak_list:
-            #self.ReadPeakList()
-            
-        #else:
-            #print "No input peak list, simulated NOEs ... ?"        
-        
-        if self.input_noe:
-            print "Reading from the NOE input file"
-            noes = self.ReadInputNOEList()
-            
-        elif self.read_extracted_NOEs:
-            print "Reading from a list of extracted NOEs"
-            noes = self.ReadExtractedNOEs()
-        else:
-            print "Problem with NOE settings; check 'read_NOEs_from_file' and 'read_extracted_NOEs'; Only one of the options should be on!"
-            sys.exit(0)
+    def set_given_input(self):
                         
-        if self.check_recip and not self.check_intensity:
-            print "Checking only for NOE reciprocity"
-            noes = self.CheckRecipNOEs(noes)
-        
-        elif self.check_intensity and not self.check_recip:
-            """
-            check of intensity assumes the check of reciprocity as well
-            """
-            print "Checking for NOE intensity and (therefore also) reciprocity"
-            self.check_recip = True
-            noes = self.CheckRecipNOEs(noes)
-            """
-            //TO DO//
-            Intensity check        
-            """
-        elif self.check_recip and self.check_intensity:
-            print "Checking for NOE reciprocity and intensity"
-            noes = self.CheckRecipNOEs(noes)
-            """
-            //TO DO//
-            Intensity check        
-            """
+        if self.read_extracted_NOEs:
+            print "Reading from a list of extracted NOEs"
+            noes = self.read_noes()
+        else:
+            print "Problem with the input NOE file; check 'read_extracted_NOEs'; the option should be on!"
+            sys.exit(1)
+                        
+        if self.check_recip: # and not self.check_intensity:
+            print "Checking for NOE reciprocity"
+            #self.check_recip = True
+            noes = self.check_noe_reciprocity(noes)
+                    
         else:        
             print "No NOE checking done..." 
     
         if self.merge:
-            noes = self.MergeNOEs(noes)
+            noes = self.merge_intra_lv_noes(noes)
         else:
             print 'Keeping ProR and ProS methyl groups of LEU/VAL as separate nodes ...'
 
         if self.merge_label_LV:
             print "No discrimination between the Leu / Val residue types ..."
-            noes = self.MergeLabelLV(noes)
+            noes = self.merge_lv_labels(noes)
         else:
             print "Discriminating between Leu / Val residue types ..."
             
         if self.ligand_noes:
-            self.lig_noes= self.ReadLigandNOEs()
+            self.lig_noes= self.read_ligand_noes()
         
         return noes     
     
-    def SetNOEDict(self):
-        self.noes = self.SetGivenInput()
+    def set_noe_dict(self):
+        self.noes = self.set_given_input()
 
-    def ReadLigandNOEs(self):
+    def read_ligand_noes(self):
         # read in 2 column file containing inter-molecular NOEs between protein and ligand
         # collect ligand noes to a dictionary
         try:
@@ -923,7 +738,7 @@ class NMRData(GenericMethods):
                 raise Exception("Format of the 'protein_ligand_noe_file' is incorrect. Two-column file expected, instead got % columns"%len(splitted))
         return lig_noes
 
-    def MergeLabelLV(self,noe_dict):
+    def merge_lv_labels(self,noe_dict):
         #print noe_dict
         merged_label_noes = {}
         for peak,conns in noe_dict.items():
@@ -939,7 +754,7 @@ class NMRData(GenericMethods):
             merged_label_noes.setdefault(relabelled_peak,[]).append(relabelled_c)
         return merged_label_noes
     
-    def MergeNOEs(self,noe_dict):
+    def merge_intra_lv_noes(self,noe_dict):
         # given the noes, merge those coming from the same residue but different methyl groups (ProR/ProS)
         print 'Merging NOEs from ProR/ProS methyl groups of the same Leu/Val residue'
         merged_noes = {}
@@ -958,7 +773,7 @@ class NMRData(GenericMethods):
             merged_noes.setdefault(new_peak,merge)  #    reset merge
         return merged_noes
                         
-    def CheckRecipNOEs(self,init_noes):
+    def check_noe_reciprocity(self,init_noes):
         #    check NOEs according to the flags given in the input file
         #    reciprocity means: NOE methyl1 >> methyl2; methyl2 >> methyl1 both exist
         #    only in case NOE is reciprocated it is kept;
@@ -968,10 +783,10 @@ class NMRData(GenericMethods):
         for peak,conns in init_noes.items():
             simple_conns = [c[0] for c in conns]    # check only for reciprocity, excluding the intensity and s/n check
             checked_noes.setdefault(peak,simple_conns)
-        checked_noes = self.CheckReciprocity(checked_noes)
+        checked_noes = self.reciprocity_check(checked_noes)
         return checked_noes
     
-    def CheckReciprocity(self,dict_conns):
+    def reciprocity_check(self,dict_conns):
         # checks reciprocity of connection between 2 peaks
         # returns only connections that are reciprocated
                 
@@ -999,8 +814,9 @@ class NMRData(GenericMethods):
             recip_conn_dict.setdefault(recip1[x],[]).append(recip2[x])
         return recip_conn_dict
 
-
-    def ReadExtractedNOEs(self):
+    ## reads input noe restraints from a two column input file
+    def read_noes(self):
+        
         unfiltered_noes = {}
         fo = open(self.extracted_NOEs,'r')
         for line in fo:
@@ -1009,191 +825,23 @@ class NMRData(GenericMethods):
             if len(splitted) == 2:
                 ID_int1 = re.findall(r'\d+',splitted[0])
                 ID_type1 = splitted[0][0]
+                                
                 newID_1 = str(ID_int1[0]) + ID_type1
                 
                 ID_int2 = re.findall(r'\d+',splitted[1])
                 ID_type2 = splitted[1][0]
                 newID_2 = str(ID_int2[0]) + ID_type2
+                
+                # check if the format of the input noe identifiers is correct
+                if (ID_type1 not in self.methyl_IDs) or (ID_type2 not in self.methyl_IDs):
+                    print "Error in input noe file, unrecognized residue type %s"%(ID_type1)
+                    print "Aborting calculation!"
+                    sys.exit(1)
 
                 unfiltered_noes.setdefault(newID_1,[]).append((newID_2,None,None)) 
                 unfiltered_noes.setdefault(newID_2,[]).append((newID_1,None,None))
+                
             else:
                 continue
             
         return unfiltered_noes
-    
-    def InputDimensions(self):
-        #    set the order of dimensions according to the NOESY experiment
-        if self.noesy_dimension == 3:            
-            self.order_dimensions = 'C-C-H'
-        elif self.noesy_dimension == 4:
-            self.order_dimensions = 'C-H-C-H'
-        else:
-            raise Exception('Unrecognised dimensionality of the NOESY spectrum')
-        
-    def GetMethylType(self,peak):
-        #    given peak in question, find its integer and str identifier
-        #    returns None for str identifier if none there
-        ID_int = re.findall(r'\d+', peak)
-        for id in self.methyl_IDs:    
-            try:
-                indx = peak.index(id)
-                ID_str = peak[indx]
-                return ID_str,ID_int
-            except Exception, e:
-                continue
-    
-    def GetMethylID(self,numbers,type):
-        if len(numbers) == 1:
-            n= numbers[0]
-            methyl = str(n) + type
-        elif len(numbers) == 2:
-            n1 = numbers[0]
-            n2 = numbers[1]
-            methyl = str(n1)+'_'+str(n2) + type
-        elif len(numbers) == 0:
-            raise Exception ('>> ERROR in peak input - no peak identifier encountered')
-        elif len(numbers) > 2:
-            raise Exception ('>> ERROR in peak input -- multiple integer peak identifiers encountered')
-        else:
-            raise Exception('>> ERROR in peak input - multiple peak identifiers encountered')
-
-        return methyl
-    
-    def DetermineMethylID(self,freqC,freqH):
-        #    take into account the methyl frequencies!
-        '''// TO DO //'''
-        pass
-
-    def ReadPeakList(self):
-        #    read in the peak list
-        #    determine types of peaks
-        methyl_list = open(self.input_peak_list,'r')
-        for line in methyl_list:
-                stripped = line.strip()
-                splitted = stripped.split()
-                if len(splitted) == 3:
-                    peakID = splitted[0]
-                    ID_str,ID_int = self.GetMethylType(peakID)
-                    if ID_str == None:
-                        print peakID
-                        print '>> No methyl types given >> Implement the method DetermineMethylID!!'
-                        print '>> Exiting ... '
-                        
-                        self.DetermineMethylID(splitted[1],splitted[2])
-                    else:
-                        methyl = self.GetMethylID(ID_int,ID_str)
-                        self.peaks.append(methyl)
-                else:
-                    continue
-        self.peaks = list(set(self.peaks))
-        self.SortPeaks()
-
-    def SortPeaks(self):
-        # sort the list of peaks according to the first integer identifier
-        reduced_list = [int(re.findall(r'\d+', peak)[0]) for peak in self.peaks]
-        self.peaks = [x for (y,x) in sorted(zip(reduced_list,self.peaks))]    
-    
-    def ReadInputNOEList(self):
-        # first sets the expected order of the dimensions (given in the input file)
-        # reads in an NOE list 
-        # determine types of peaks
-        # checks for dimensionality and consistency with file format should have been done by this point!
-        # expects the noe identifiers to be given in the first column and to match the input dimension 
-
-        unfiltered_noes = {}
-        print 'Reading NOE list ... '
-        self.InputDimensions()  
-        frequencies_order = self.order_dimensions.split('-')   
-        noe = open(self.input_noe_list,'r')
-        for line in noe:
-            stripped = line.strip()
-            splitted = stripped.split()
-            noe_label = splitted[0].split('-')
-            # if auto peak, skip
-            if noe_label[-1] == frequencies_order[-1] and noe_label[-2] == frequencies_order[-2]:
-                continue
-            
-            if len(frequencies_order) == 3:
-                noe1_str,noe1_int= self.GetMethylType(noe_label[0])
-                noe2_str,noe2_int= self.GetMethylType(noe_label[1])
-            
-                '''
-                if noe1_str == None:
-                    self.DetermineMethylID(splitted[1],splitted[3])
-                if noe2_str == None:
-                    self.DetermineMethylID(splitted[2])
-                    
-                >> depends on the type of the experiment --> would be good to do this only for
-                the HMQC peaks and then relate those to the NOEs
-                '''
-            elif len(frequencies_order) == 4:
-                noe1_str,noe1_int= self.GetMethylType(noe_label[0])
-                noe2_str,noe2_int= self.GetMethylType(noe_label[2])
-                   #print noe_label                
-                '''
-                if noe1_str == None:
-                    self.DetermineMethylID(splitted[1],splitted[2])
-                if noe2_str == None:
-                    self.DetermineMethylID(splitted[3],splitted[4])
-                    
-                >> depends on the type of the experiment --> probably would be good to do this only for
-                the HMQC peaks and then relate those to the NOEs
-                '''
-            else:
-                print 'Incorrect or unrecognised dimensionality of the NOESY spectrum provided!' 
-            
-            methyl1 = self.GetMethylID(noe1_int,noe1_str)
-            methyl2 = self.GetMethylID(noe2_int,noe2_str)
-            
-            #print methyl1, ' >> ',methyl2                                           
-            #unfiltered_noes.setdefault(methyl1,[]).append((methyl2,float(splitted[-2]),float(splitted[-1])))
-            unfiltered_noes.setdefault(methyl1,[]).append((methyl2,float(0),float(0)))
-
-        return unfiltered_noes
-
-    def CheckInt_StoN(self):
-        '''
-        // TO DO//
-        '''
-        pass
-            
-    def AssembleResults(self,resultdict,short,long,assign):
-        # result dict is nested dictionary
-        try:
-            resultdict[long]
-        except KeyError:
-            resultdict.setdefault(long,{})
-        try:
-            resultdict[long][short]
-            for peak,atom in assign.items():
-                resultdict[long][short].setdefault(peak,[]).append(atom)
-        except KeyError:
-            resultdict[long].setdefault(short,{})
-            for peak,atom in assign.items():
-                resultdict[long][short].setdefault(peak,[]).append(atom)                    
-        return resultdict       
-                
-    def SetEdgeAssignment(self,medges_update,assign,snodes,sedges,bnodes,bedges):
-        for snode,bnode in assign.items():
-            e1,e2= self.GetIntEdges(snode,bnode,snodes,bnodes, sedges,bedges)
-            medges_update= self.EdgeAssignment(medges_update,e1,e2)
-        escore = self.EdgeScore(medges_update)
-        return escore
-        
-    def EdgeAssignment(self,medges,edges1,edges2):        
-        for edge1 in edges1:
-            for col in range(len(medges[edge1])):
-                if medges[edge1,col]==1 and col not in edges2:   # if there is an edge for the node in G1 and there is no edge for the corresponding node in G2
-                    medges[edge1,col] = 0  # set this correspondence in edges to 0 (i.e. in the current mapping edge1 of G1 can not correspond to some of the edges in 
-        return medges
-    
-    def EdgeScore(self,medges):
-        nonzero = 0 
-        for row in medges:
-            if np.count_nonzero(row) != 0:  # if entire row is not set to 0
-                nonzero+=1  # the number of self.edgesleft is equal to the number of rows with non zero elements
-        return nonzero
-                
-
-    

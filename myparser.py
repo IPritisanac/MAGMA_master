@@ -1,4 +1,5 @@
 """
+__author__: Matteo Degiacomi
 input file parser. Extracted from BioBOx, (c) Matteo Degiacomi
 """
 
