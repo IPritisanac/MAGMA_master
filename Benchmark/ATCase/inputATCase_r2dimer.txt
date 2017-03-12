@@ -1,0 +1,23 @@
+#	PDB part
+pdb_file	Benchmark/ATCase/pdbs/1D09.pdb
+chains	B D 
+residues ILE VAL LEU 
+short_distance_threshold	10
+long_distance_threshold	15           
+#	NOE part                               
+labelled_residues	ILE VAL LEU             
+read_extracted_NOEs	on
+extracted_NOE_list	Benchmark/ATCase/dat/ATCase_r2dimer_certain_NOE_labelled.txt
+check_NOE_reciprocity	on             
+#	System dependent requirements
+run_subgraph_isomorphism	on
+priority_iterations	50
+N_priority_MCES	3
+merge_LV_label	off
+merge_proRS	on
+merge_NOEs	on
+min_size	1
+mode	connected_subgraphs
+maximum_run_time	100
+mces_mode	all
+stripMode on

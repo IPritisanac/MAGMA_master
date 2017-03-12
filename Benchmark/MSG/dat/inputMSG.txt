@@ -1,0 +1,34 @@
+#	PDB part
+pdb_file    /home/beast/ipritisanac/Benchmark_input_files/MSG/13percent_seq_sim_models/24.pdb
+chains	A
+residues ILE VAL LEU 
+short_distance_threshold	10        
+long_distance_threshold	15         
+#	NOE part
+HMQC_list	/home/beast/ipritisanac/Benchmark_input_files/MSG/hmqc.txt           
+format_peak_list	sparky                               
+labelled_residues	ILE VAL LEU               
+read_NOEs_from_file	off
+NOE_list	/home/beast/ipritisanac/Benchmark_input_files/MSG/1Y8B_methyl_NOEs_only.txt
+format_NOE_list	sparky
+dimensions_NOEs	3
+read_extracted_NOEs	on
+extracted_NOE_list	/home/beast/ipritisanac/Benchmark_input_files/MSG/msg_1y8B_filtered_NOE_list.txt
+check_NOE_reciprocity	on	
+check_NOE_intensity	off
+#	Results/outputs
+output_NOE_file	output.txt
+output_format	assignments_only               
+#	System dependent requirements
+run_subgraph_isomorphism	on
+priority_iterations	50
+N_priority_MCES	3
+output_file_McGregor	/home/beast/ipritisanac/Benchmark_input_files/MSG/results_multi_structures/homology_13/mces_msg_hm24
+output_file_vf2	/home/beast/ipritisanac/Benchmark_input_files/MSG/results_multi_structures/homology_13/vf2_msg_hm24
+merge_LV_label	off
+merge_NOEs	on
+min_size	1
+mode	connected_subgraphs
+run_at	short
+maximum_run_time 100
+mces_mode	all

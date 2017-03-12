@@ -1,0 +1,22 @@
+#	PDB part
+pdb_file	Benchmark/msrB/pdbs/3e0o.pdb
+chains	A B C D E F
+residues ILE VAL LEU 
+short_distance_threshold	10      
+long_distance_threshold	15           
+#	NOE part                             
+labelled_residues	ILE VAL LEU             
+read_extracted_NOEs	on
+extracted_NOE_list	Benchmark/msrB/dat/filtered_merged_NOEs.txt
+check_NOE_reciprocity	on               
+#	System dependent requirements
+priority_iterations	50
+N_priority_MCES	3
+merge_LV_label	off
+merge_proRS	on
+merge_NOEs	on
+min_size	1
+mode	all_subgraphs
+mces_mode	all
+maximum_run_time	100
+strip_mode on

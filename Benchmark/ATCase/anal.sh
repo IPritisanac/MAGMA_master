@@ -1,0 +1,1 @@
+python ../../MAGMA_eclipse/analysis.py 
