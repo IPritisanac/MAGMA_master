@@ -6,17 +6,16 @@ __author__: Iva Pritisanac
 executes methods defined in mces.py
 """
 
-import sys,os,copy
+import sys, os, copy
 from mces import McGregor	# import all methods of the class
 from mces import MCES_PY
 from data import ParseInput,PDBData,NMRData
-from graph_heuristics import Graph,Heuristic
+from graph_heuristics import Heuristic
 from subgraph_isomorphism import IgraphSubIso
 
 import analysis
 
 import numpy as np
-import igraph as ig
 import networkx as nx
 import time
 import random
@@ -39,7 +38,7 @@ class Magma():
         try:
             P.parse(input_file)
         except Exception, e:
-            print "Could not parse input file:\n%s"%e
+            print "ERROR: Could not parse input file:\n%s"%e
             sys.exit(1)
         try:
             P.check_variables()
@@ -57,7 +56,7 @@ class Magma():
         try:
             P.parse(input_file)
         except Exception, e:
-            print "Could not parse input file:\n%s"%e
+            print "ERROR: Could not parse input file:\n%s"%e
             sys.exit(1)
         try:
             P.check_variables()
@@ -221,7 +220,7 @@ class Magma():
                 shuffled_noe_vertices = Gp.optimal_graph_order_from_node(noe_vertices[n],noe_vertices,noe_adjacency)
                 shuffled_noe_adjacency = Gp.re_order_adjecancy(shuffled_noe_vertices,noe_vertices,noe_adjacency)
                 """
-                //TO CHECK//    deepcopying probably not neccessary below -- omit 
+                //TO CHECK//    deepcopying probably not necessary below -- omit 
                 """
                 vertex_lists.setdefault(copy.deepcopy(noe_vertices[n]),copy.deepcopy(shuffled_noe_vertices)) 
                 vertex_adjacencies.setdefault(copy.deepcopy(noe_vertices[n]),copy.deepcopy(shuffled_noe_adjacency))
