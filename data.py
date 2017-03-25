@@ -90,19 +90,19 @@ class ParseInput(Parser):
         
         if len(self.chains)==0:          
             """
-            //Default could be set instead of raising an exception
+            Default could be set instead of raising an exception
             """  
             raise Exception("no chains of the pdb file selected")
         
         if len(self.residues) == 0:
             """
-            //Default could be set instead of raising an exception
+            Default could be set instead of raising an exception
             """
             raise Exception("no methyl residues of the pdb file selected")
         
         if self.short_distance_threshold == "":
             """
-            //Default could be set instead of raising an exception
+            Default could be set instead of raising an exception
             """
             raise Exception("Distance threshold for the calculation is not provided ")
             
@@ -118,7 +118,6 @@ class ParseInput(Parser):
         if self.distance_type=="":
             raise Exception("Please define between which methyl atoms distance matrix should be computed: 'proton' or 'carbon'")
         
-        
         if self.short_distance_threshold > self.long_distance_threshold:
             raise Exception("short and long distance thresholds might have been swapped!\ncheck short/long distance thresholds!")
                 
@@ -127,7 +126,6 @@ class ParseInput(Parser):
         
         if sorted(self.labelled_residues) != sorted(self.residues):
             raise Exception("methyl labels from PDB file do not match with the NMR input?\n make sure that list 'residues' and list 'labelled residues' match!")
-        
         
         if os.path.isfile(self.extracted_NOE_list)== False:
             raise Exception("NOE file does not exist or the path to the file is incorrect!")
@@ -180,7 +178,7 @@ class ParseInput(Parser):
         elif self.merge_proRS == "off":
             self.merge_proRS = False
         else:
-            raise Exception("incorrect entry for 'merge_proR_S'; expected 'on' or 'off'; instead got %s"%self.merge_proR_S)
+            raise Exception("incorrect entry for 'merge_proR_S'; expected 'on' or 'off'; instead got %s"%self.merge_proRS)
                         
         if self.merge_LV_label == "on":
             self.merge_LV_label = True

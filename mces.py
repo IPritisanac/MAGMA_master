@@ -486,7 +486,15 @@ class MCES_PY(GenericMethods):   # IP python version
                         self.output.flush()
                         self.store_medges_edgesleft()
                         elapsed=time.time()-self.starttime            
-                        #print "test1", self.G1node       
+                        print "test1"
+                        print "current vertex",self.g1_nodes[self.G1node]
+                        for key,val in current.items():
+                            print self.g1_nodes[key],">>",self.G2nodes[val]
+                        print "still allowed"
+                        for i in self.allowedG2nodes:
+                            print self.G2nodes[i]
+                        #print "current mapping",current
+                        print "edgesleft",self.edgesleft    
                         if (n_mces and mces_cnt >= n_mces) or (time_check and elapsed>maximum_time):
                             #print "test2"
                             self.output.close()
