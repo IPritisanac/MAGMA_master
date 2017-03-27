@@ -7,8 +7,7 @@ executes methods defined in mces.py
 """
 
 import sys, os, copy
-from mces import McGregor	# import all methods of the class
-from mces import MCES_PY
+from mces import MCES_PY # import all methods of the class
 from data import ParseInput,PDBData,NMRData
 from graph_heuristics import Heuristic
 from subgraph_isomorphism import IgraphSubIso
@@ -198,8 +197,11 @@ class Magma():
     # @param noe_adjacency nested list of NMR graph vertices' adjacency relationships
     # @param structure_vertices structure graph vertices
     # @param structure_adjacency nested list of structure graph vertices' adjacency relationships
-    # @retval ??        
-    def optimise_run_order(self,Gp,candidates_dict,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,n_prior_iter,n_prior_mces,max_time,tag,version="c",optimise_mode='y'):               
+    # @retval fin_candidates an optimised order hash table of vertex assignment options with nmr-vertices as keys and structure-vertices as values
+    # @retval fin_vertices an optimised order of of data (NMR) graph vertices for the MCES search
+    # @retval fin_adjacencies a vertex adjacency order that follows the order established by fin_vertices
+    # @retval start_time starting time of the optimisation calculation
+    def optimise_run_order(self,Gp,candidates_dict,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,n_prior_iter,n_prior_mces,max_time,tag,version="py",optimise_mode='y'):               
         
         start_time = time.time() # start a timer
         # create output files for convergence analysis
@@ -224,13 +226,7 @@ class Magma():
                 """
                 vertex_lists.setdefault(copy.deepcopy(noe_vertices[n]),copy.deepcopy(shuffled_noe_vertices)) 
                 vertex_adjacencies.setdefault(copy.deepcopy(noe_vertices[n]),copy.deepcopy(shuffled_noe_adjacency))
-                if version=="c": # run c version of McGregor algorithm
-                    MC=McGregor(shuffled_noe_vertices) # instantiate McGregor class given the current order of nmr graph vertices (shuffled_noe_vertices)
-                    MC.prepare_mcgregor(shuffled_noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
-                    if optimise_mode=="y":  # 04/03/2017 -- the earlier name 'vanilla' mode
-                        iter_score,results = MC.mcgregor_loop(False,False,1,False,max_time,False,0)
-                    else:
-                        iter_score,results = MC.mcgregor_loop(False,True,n_prior_mces,True,max_time,False,0)
+                
                 if version=="py":
                     MP = MCES_PY(noe_vertices)
                     MP.prepare_mces_py(noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict)
@@ -244,10 +240,7 @@ class Magma():
                 best_start_vertex = random.choice(vertex_scores[max(vertex_scores.keys())])    # choose randomly from a pool of the best scoring vertices
                 print "Started the mapping search from >> ",best_start_vertex
                 sys.stdout.flush()
-                #makeInputfile for mcesCore
-                if version=="c":
-                    MC=McGregor(vertex_lists[best_start_vertex])    # start the search from this vertex, the bfs from that vertex, and adjacency ordered accordingly
-                    MC.prepare_mcgregor(vertex_adjacencies[best_start_vertex],structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
+                
                 if version=="py":
                     MP = MCES_PY(vertex_lists[best_start_vertex])
                     MP.prepare_mces_py(vertex_adjacencies[best_start_vertex],structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict)
@@ -259,18 +252,10 @@ class Magma():
                 ##         
                 shuffled_noe_vertices = Gp.optimal_graph_order_from_node(noe_vertices[0],noe_vertices,noe_adjacency)
                 shuffled_noe_adjacency = Gp.re_order_adjecancy(shuffled_noe_vertices,noe_vertices,noe_adjacency)
-                if version=="c":
-                    MC=McGregor(shuffled_noe_vertices)
-                    MC.prepare_mcgregor(shuffled_noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
+                
                 if version=="py":
                     MP=MCES_PY(shuffled_noe_vertices)
                     MP.prepare_mces_py(shuffled_noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict)
-
-            if version=="c":
-                if(optimise_mode=="y"):
-                    iter_score,best_results = MC.mcgregor_loop(False,True,n_prior_mces,True,max_time,False,0)
-                else:
-                    iter_score,best_results = MC.mcgregor_loop(False,True,n_prior_mces,True,10*max_time,False,0)
                     
             if version=="py":
                 iter_score,best_results=MP.mcgregor_main(self.outdir+os.sep+"optimize_mces_step2_py.out",True,n_prior_mces,True,max_time,False)
@@ -306,8 +291,7 @@ class Magma():
                 #sys.exit(1)
 
             # after iterating over each starting vertex possibility, reorder candidates_dict according to the best_results   
-            if version=="c":
-                candidates_dict = MC.mc_reprioritize(best_results,candidates_dict)
+            
             if version=="py":
                 candidates_dict = MP.re_prioritize(best_results,candidates_dict)
             
@@ -331,25 +315,7 @@ class Magma():
         #    return candidates_dict,shuffled_noe_node_list,shuffled_noe_adjacency
         
     ## on the basis of the data structures exiting the optimization step -- executes complete McGregor run
-            
-    def run_complete_mcgregor_c(self,candidates_dict,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,time_elapsed,tag,mces_mode="all"):
-        
-        MC = McGregor(noe_vertices)    # create an instance of McGregor class with the current list of vertices
-        MC.prepare_mcgregor(noe_adjacency,structure_vertices,structure_adjacency,structure_vertices,structure_adjacency,candidates_dict,self.outdir)
-        # define name of the output file
-        outfile=self.outdir+os.sep+"mces_"+str(tag)+"_c.txt"
-        
-        if mces_mode=="one":
-            iter_score,best_results=MC.mcgregor_loop(outfile,False,None,False,None,False,1)
-            total_time = time.time()-time_elapsed
-            print "Calculation took >> ", total_time, " to find 1 mces"
-        elif mces_mode=="all":
-            iter_score,best_results=MC.mcgregor_loop(outfile,True,None,False,None,False,1)
-            total_time = time.time()-time_elapsed
-            print "Calculation took >> ", total_time, " to find all mces"
-        else:   # potentially unnecessary - checked by Parser
-            print "Unrecognized mcesmode in run_complete_mcgregor_c!"
-            sys.exit(1)
+    
     ## run python version of mcgregor mces algorithm
                     
     def run_complete_mcgregor_py(self,candidates_dict,noe_vertices,noe_adjacency,structure_vertices,structure_adjacency,time_elapsed,tag,mces_mode="all"):

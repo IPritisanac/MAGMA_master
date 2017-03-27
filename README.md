@@ -19,22 +19,18 @@ MAGMA can be run using Linux/Unix and Windows.
 For a successful operation of MAGMA, you need to have:
 		
 * GNU Compiler Collection (GCC)
-* python (version 2.7 or higher)
+* python (__version__= '2.7' or higher)
 		
  And the following python packages installed on your system.
  
-* numpy (__version__)
-* matplotlib (__version__)
-* igraph (__version__)
-* networkx (__version__)
-* munkres (__version__)
+* numpy (__version__= '1.8.1' or higher)
+* matplotlib (__version__ = '1.3.1' or higher)
+* igraph (__version__= '0.7.1' or higher)
+* networkx (__version__= '1.8.1' or higher)
+* munkres (__version__= '1.0.7' or higher)
 			
-MAGMA c-version (faster, not supported on Windows) is run from a command line as follows:
- `python execute_magma.py /path/to/input/text/file c`
-
-MAGMA python-version (slower) is run from a command line as follows:
- `python execute_magma.py /path/to/input/text/file py`
-
+MAGMA python-version is run from a command line as follows:
+ `python execute_magma.py /path/to/input/text/file'
 
 ## MAGMA OUTPUTS
 
@@ -55,12 +51,8 @@ These are less relevant for the user, but useful for the analysis of run progres
 															
 * `conv.2.x.out`, text file monitoring details of the first step of MAGMA optimization prior to execution of complete MCES search. For each step of iterative optimization (column 1) enumerate how many vertices (column 3) have scored a particular score (column 2)
 
-* `conv.1.x.out`. Text file monitoring progress of the second step of MAGMA optimization prior to execution of complete MCES search. For each step of iterative optimization (column 1) store the score of collected mces (column 2)
-		
-* `core/final.out`, the assignment of the last connected subgraph (or in case of all_subgraphs run mode) the assignment result
-														
-* `core/mcesCore.init`, the output of MAGMA's initial optimization that is used by the program (not relevant to the user)
-	
+* `conv.1.x.out`. text file monitoring progress of the second step of MAGMA optimization prior to execution of complete MCES search. For each step of iterative optimization (column 1) store the score of collected mces (column 2)
+			
 * `mces_n.txt`, lists all mces solutions found by McGregor algorithm for the nth connected subgraph of the nmr data graph
 
 * `mces_n.txt.B`
@@ -77,8 +69,7 @@ author: Iva Pritisanac (iva.pritisanac[at]gmail.com), University of Oxford
 other contributions:
 
 * classes Parser, Molecule and Structure -- Matteo Degiacomi (matteo.degiacomi[at]gmail.com), University of Oxford
-* re-implementation of core McGregor MCES algorithm in C on the basis of author's original Python version -- Andrew Baldwin (andrew.baldwin[at]chem.ox.ac.uk), University of Oxford
-* convergence monitoring, and output files for the C version of McGregor MCES algorithm -- Andrew Baldwin (andrew.baldwin[at]chem.ox.ac.uk), University of Oxford
+* functions for monitoring optimization progress and producing results summary files -- Andrew Baldwin (andrew.baldwin[at]chem.ox.ac.uk), University of Oxford
 * implementation of subgraph isomorphism algorithm from [igraph](igraph.org)
 * implementation of Hungarian algorithm from the python package [munkres 1.0.7](https://pypi.python.org/pypi/munkres/)
 * graph objects definitions, manipulations, and plotting python package [networkx 1.9.1](https://pypi.python.org/pypi/networkx/)

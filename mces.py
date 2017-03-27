@@ -1,12 +1,8 @@
 """
-__authors__: Iva Pritisanac and Andy Baldwin
+__author__: Iva Pritisanac
 
-implementation of McGregor algorithm for maximal common edge subgraph in
-
-        > in c (class McGregor; AJB)
-        > in python (class MCES_PY; IP)
-
-implementation based on theoretical work from James J. McGregor;1982 | 
+implementation of McGregor algorithm for maximal common edge subgraph in python (class MCES_PY;)
+implementation based on theoretical work from James J. McGregor; 1982 | 
 https://pdfs.semanticscholar.org/ed10/c6f788922cd5e7cb26c3d55f676979958852.pdf);
 """
 
@@ -14,142 +10,7 @@ import copy,collections,time
 from generic import GenericMethods
 import numpy as np
 import os,sys
-
-class McGregor(GenericMethods):   # AJB Oct 2016 version of McGregor class for C version of the algorithm on the basis of python class MCES_PY
-
-    def __init__(self,G1_node_list): 
-        
-        self.G1nodes = G1_node_list    
-        
-    def prepare_mcgregor(self,G1_adjacency,G2_node_list,G2_adjacency,G2_long_node_list,G2_long_adjacency,matching_priority,outdir):
-        
-        self.outdir=outdir
-        # IP 03/03/2017 not necessary -- checked for by Magma class
-        #if(os.path.exists(self.outdir)==0):
-            #os.system('mkdir '+self.outdir)
-            
-        # IP 03/03/2017 -- adjusted to make system independent
-        if not os.path.exists(self.outdir+os.sep+"core"): # if the output results directory does not exist on this path
-            os.makedirs(self.outdir+os.sep+"core")   # create the directory
-        
-        outy=open(self.outdir+os.sep+"core"+os.sep+"mcesCore.init",'w') #self.outdir+'/core/mcesCore.init','w')
-        outy.write('G1_nodes\n')
-        for i in range(len(self.G1nodes)):
-            outy.write('%s :\t' % (self.G1nodes[i]))
-            for j in range(len(G1_adjacency[i])):
-                outy.write('%s\t' % (G1_adjacency[i][j]))
-            outy.write('\n')
-        outy.write('G2_nodes\n')
-        for i in range(len(G2_node_list)):
-            outy.write('%s :\t' % (G2_node_list[i]))
-            for j in range(len(G2_adjacency[i])):
-                outy.write('%s\t' % (G2_adjacency[i][j]))
-            outy.write('\n')
-        outy.write('MatchPriorities\n')
-        for i in range(len(self.G1nodes)):
-            outy.write('%s :\t' % (self.G1nodes[i]))
-            for j in range(len(matching_priority[self.G1nodes[i]])):
-                outy.write('%s\t' % (matching_priority[self.G1nodes[i]][j]))
-            outy.write('\n')
-        outy.close()
-
-        #for item,values in matching_priority.items():
-        #print item,':',values
-
-    ## create a new vertex matching priority list for every vertex in the dictionary on the basis of assigned
-    # @param assigned - updated hash table where every vertex (key) has with it associated list of assignment options (values)
-    # @param init_matchingoptions - original hash table where every vertex (key) has with it associated list of assignment options (values)
-    # @retval new_priorities - an updated hash table of assignment options; or in cases of errors in updating, the original init_matchingoptions 
-    def mc_reprioritize(self,assigned,init_matchingoptions):
-        
-        if not bool(assigned):  # if the entering assigned dictionary is empty
-            print "An empty assignment dictionary entered in mc_reprioritize assigned; returning the original dictionary of assignment options"
-            return init_matchingoptions # return the original candidate matching options
-        elif len(assigned.keys())!=len(init_matchingoptions.keys()): # if the entering dictionary does not have an assignment option for all vertices
-            print "The assignment dictionary entering in mc_reprioritize does not match the original; returning the original dictionary of assignment options"
-            return init_matchingoptions
-        else:
-            try:
-                new_priorities = {}
-                for peak,atoms in init_matchingoptions.items():
-                    old_prior = [a for a in atoms if a not in assigned[peak]]
-                    new_prior = assigned[peak]+old_prior    # set the beginning of the list to the entering assigned values, append to the end the original values
-                    new_priorities.setdefault(peak,new_prior)
-                    #print "Reordered match order >> " #,new_priorities
-                #for key,value in new_priorities.items():
-                    #print key,':',value
-                return new_priorities
-            except ValueError:  # in case keys of the two dictionaries don't match
-                print "mc_reprioritize caught ValueError, returning the original dictionary of assignment options"
-                return init_matchingoptions
-        
-        
-    def mcgregor_loop(self,outfile,runall=True,n_mces=None,time_check=False,maximum_time=None,thresh=True,parflg=0): # AJB Oct 2016 
-            
-        try: #this is the number of mces-es to acquire. 0 means get all.
-            n_mcesSet=int(n_mces)
-        except:
-            n_mcesSet=0
-
-        if(runall==True): #save all above a threshold size or just the first?
-            runSet=1
-        else:
-            runSet=0
-            
-        if(outfile==False):
-            runOut=str(0)
-        else:
-            runOut=outfile
-            
-        try:
-            maxtimeSet=int(maximum_time)
-        except:
-            maxtimeSet=0
-
-        # IP 04/03/2017
-        # assumes that the input text file is located inside dir MAGMA/ 
-        # assumes that bin is located at path/to/MAGMA/bin        
-        #cpath = ".."+os.sep+".."+os.sep+"src"+os.sep+"mcesCore"
-        cpath = os.path.abspath("bin"+os.sep+"mcesCore") # get the absolute path to the bin directory and the core of the C code for the mces algorithm
-        if(parflg==0):  
-            runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init "+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(parflg) 
-            #runline='../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(parflg)
-        else:
-            runline = cpath+" "+self.outdir+os.sep+"core"+os.sep+"mcesCore.init "+runOut+" "+self.outdir+os.sep+"core"+os.sep+"final.out "+str(n_mcesSet)+" "+str(runSet)+" "+str(maxtimeSet)+" "+str(0)
-            #runline='mpiexec -np 2 ../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(parflg)
-            #runline='../../src/mcesCore '+self.outdir+'/core/mcesCore.init '+runOut+' '+self.outdir+'/core/final.out '+str(n_mcesSet)+' '+str(runSet)+' '+str(maxtimeSet)+' '+str(0)
-
-        sys.stdout.flush()
-
-        os.system(runline) # does not work on windows
-        
-        if(runSet==1):
-            print runline
-            
-        #read in output file
-        if(os.path.exists(self.outdir+os.sep+"core"+os.sep+"final.out")==1): #'/core/final.out')==1):
-            inny=open(self.outdir+os.sep+"core"+os.sep+"final.out")
-            final_assignments={}
-            for line in inny.readlines():
-                test=line.split()
-                if(len(test)==1):
-                    edgesleft=int(test[0])
-                else:
-                    key=test[0].split(':')[0]
-                    ass=[]
-                    for j in range(len(test)-1):
-                        ass.append(test[j+1])
-                    final_assignments[key]=ass
-            os.system('rm -rf '+self.outdir+os.sep+'core')
-            return edgesleft,final_assignments
-        else:
-            print 'No output'
-            return 0,{}
-        
-        #if(edgesleft==0):
-        #    print 'Problem: no score. Aborting'
-        #    sys.exit(1)             
-
+           
 # inheritance from Generic Methods
 # the class prepares the data structures for the MCES algorithm
 # the class executed MCES algorithm
@@ -464,44 +325,40 @@ class MCES_PY(GenericMethods):   # IP python version
                 ## if there are untried! nodes in G2 to which node of G1 may(not matched to others already) correspond to, then Xi := one of these nodes, mark G2 as tried for i
                 if self.edgesleft > self.bestedgesleft or (runall and self.edgesleft >= self.bestedgesleft):
                     if self.G1node == self.g1_nodes.index(self.g1_nodes[-1]): # if the algorithm reached the end of the vertex list 
-                        
                         #print "found MCES of size >> ",self.edgesleft,"in iter >> ",iter_cnt
                         mces_cnt+=1  
                         current = copy.deepcopy(self.current_mapping)
-                        #print current
+                        #print "assigning", self.g1_nodes[self.G1node]
                         self.collect_best_assignments(current)
-                        #print self.edgesleft
+                        #print "current assignment"
+                        #for key,val in current.items():
+                            #print self.rG1indices[key],">>",self.rG2indices[val]
                         self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
-
+                        #print "still allowed"
+                        #for g2 in self.allowedG2nodes:
+                            #print self.G2nodes[g2]
+                        #print self.allowedG2nodes
                         # routine for a look up of leftover assignment options for the final vertex removed from here [26/10/16] - Iva
                         # indicate that MCS has been found --> this will influence the treeorder appending
                         #self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
                         timeittook = time.time() - self.starttime
                         #self.output.write('%s\n'%(timeittook))
                         self.output.write('%s\n'%(self.edgesleft))
-                                               
-                        for key,value in self.current_mapping.items():                          
+                                    
+                        #for key,value in self.current_mapping.items():   
+                        for key,value in current.items():                       
                             self.output.write('%s\t%s\n'%(self.rG1indices[key],self.rG2indices[value]))
                         self.output.write('\n')
                         self.output.flush()
                         self.store_medges_edgesleft()
                         elapsed=time.time()-self.starttime            
-                        print "test1"
-                        print "current vertex",self.g1_nodes[self.G1node]
-                        for key,val in current.items():
-                            print self.g1_nodes[key],">>",self.G2nodes[val]
-                        print "still allowed"
-                        for i in self.allowedG2nodes:
-                            print self.G2nodes[i]
-                        #print "current mapping",current
-                        print "edgesleft",self.edgesleft    
+                           
                         if (n_mces and mces_cnt >= n_mces) or (time_check and elapsed>maximum_time):
                             #print "test2"
                             self.output.close()
                             final_assign_solutions = self.get_final_assignments()
                             return self.bestedgesleft,final_assign_solutions
                     else:  
-                        
                         self.store_medges_edgesleft()
                         self.G1node= self.G1node + 1
                         self.storage[self.G1node][2]=[] # mark all nodes as untried
