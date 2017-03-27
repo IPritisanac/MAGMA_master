@@ -226,10 +226,11 @@ class MCES_PY(GenericMethods):   # IP python version
         #    dynamically update possible matches considering current mapping and previously tried ones
         #    check the storage of currently tried match options ( in pseudocode (if there are any UNTRIED options to which G1 may correspond to))       
         #print self.G1node
-        #print len(self.nodematch_priority_subset)
+        #print len(self.nodematch_priority_subset)           
+        
         priorityG2options = self.nodematch_priority_subset[self.G1node]   # all priority G2 options
         otherG2options = self.nodematch_all[self.G1node]    # leftover G1 options
-        triedG2 = self.storage[self.G1node][2]   # all currently untried G2 options    
+        triedG2 = self.storage[self.G1node][2]   # all currently tried G2 options    
         
         allowedG2nodes = [node for node in priorityG2options if node not in self.current_mapping.values() and node not in triedG2]    # G2 nodes to which i of G1 may correspond to
         bestoptions = self.score_adjust(self.G1node,allowedG2nodes)
@@ -239,6 +240,15 @@ class MCES_PY(GenericMethods):   # IP python version
             allowedG2nodes = [node for node in otherG2options if node not in self.current_mapping.values() and node not in triedG2]    # G2 nodes to which i of G1 may correspond to       
             bestoptions = self.score_adjust(self.G1node,allowedG2nodes)
             self.allowedG2nodes = bestoptions
+                     
+        #if self.G1node == self.g1_nodes.index(self.g1_nodes[-1]):
+            #print "score", self.edgesleft
+            #print "current mapping", self.current_mapping.values()
+            #print "priority g2",priorityG2options
+            #print "other", otherG2options
+            #print "tried",triedG2
+            #print "allowed",self.allowedG2nodes
+                     
                      
     def score_adjust(self,G1node,options):
         sorted_options = []
@@ -305,8 +315,9 @@ class MCES_PY(GenericMethods):   # IP python version
         self.starttime = time.time()
         self.output = open(outfile,"w") # open the output file where resulting assignments will be stored
         iter_cnt = 0    # count how many exact MCES iterations performed
-        mces_cnt = 0    # count how many MCES have been found        
-        while True:             
+        mces_cnt = 0    # count how many MCES have been found    
+                                    
+        while True:  
             self.match_options()     # sets the lists self.untriedG2nodes and self.allowedG2nodes for possible matches to current node 
             iter_cnt+=1	#	count an iteration of MCES algorithm
             #########
@@ -317,9 +328,10 @@ class MCES_PY(GenericMethods):   # IP python version
                 self.get_edges()   #    get to edges of current node in G1 and its matched node in G2
                 # before refinement of MEDGES on the basis of this correspondence, create temporary copy of MEDGES which will either be accepted or rejected
                 medges_tmp = copy.deepcopy(self.medges)
+                #edgesleft_tmp = np.sum(np.any(medges_tmp,axis=1))  
                 # REFINE MEDGES on the basis of this tentative correspondence
                 self.update_medges()
-                self.edgesleft = np.sum(np.any(self.medges,axis=1))               
+                self.edgesleft = np.sum(np.any(self.medges,axis=1))
                 self.set_priorities()
                 self.store_priorities()  # store these priorities in the workspace of i + 1 node of G1                                
                 ## if there are untried! nodes in G2 to which node of G1 may(not matched to others already) correspond to, then Xi := one of these nodes, mark G2 as tried for i
@@ -328,33 +340,26 @@ class MCES_PY(GenericMethods):   # IP python version
                         #print "found MCES of size >> ",self.edgesleft,"in iter >> ",iter_cnt
                         mces_cnt+=1  
                         current = copy.deepcopy(self.current_mapping)
-                        #print "assigning", self.g1_nodes[self.G1node]
-                        self.collect_best_assignments(current)
-                        #print "current assignment"
-                        #for key,val in current.items():
-                            #print self.rG1indices[key],">>",self.rG2indices[val]
+                        self.collect_best_assignments(current)                        
                         self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
-                        #print "still allowed"
-                        #for g2 in self.allowedG2nodes:
-                            #print self.G2nodes[g2]
-                        #print self.allowedG2nodes
                         # routine for a look up of leftover assignment options for the final vertex removed from here [26/10/16] - Iva
                         # indicate that MCS has been found --> this will influence the treeorder appending
-                        #self.bestedgesleft = copy.deepcopy(self.edgesleft)    # dynamically assign bestedges score to edgesleft score every time MCS is found 
-                        timeittook = time.time() - self.starttime
+
+                        #timeittook = time.time() - self.starttime
                         #self.output.write('%s\n'%(timeittook))
                         self.output.write('%s\n'%(self.edgesleft))
-                                    
-                        #for key,value in self.current_mapping.items():   
                         for key,value in current.items():                       
                             self.output.write('%s\t%s\n'%(self.rG1indices[key],self.rG2indices[value]))
                         self.output.write('\n')
                         self.output.flush()
-                        self.store_medges_edgesleft()
-                        elapsed=time.time()-self.starttime            
-                           
+                        self.store_medges_edgesleft() # Iva 27/03 -- this is not neccessary -- storing last vertex ahead -- never used
+                        elapsed=time.time()-self.starttime    
+                                
+                        # Iva 27/03/2017 -- fixed a bug! - not all options for the final vertex in g1_nodes were evaluated
+                        # -- did: reset medges matrix to the tmp matrix (prior to the last tentative correspondence update) so that all options for the final vertex can be evaluated
+                        self.medges = copy.deepcopy(medges_tmp) 
+                          
                         if (n_mces and mces_cnt >= n_mces) or (time_check and elapsed>maximum_time):
-                            #print "test2"
                             self.output.close()
                             final_assign_solutions = self.get_final_assignments()
                             return self.bestedgesleft,final_assign_solutions

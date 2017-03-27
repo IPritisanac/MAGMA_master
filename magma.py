@@ -9,8 +9,6 @@ from magma_class import Magma
 from graph_heuristics import Graph
 
 # import the user input file with parameters for the calculation
-#filename="Benchmark/ubiquitin/input_ubiquitin.txt"
-
 try:
     filename = sys.argv[1]
 except:

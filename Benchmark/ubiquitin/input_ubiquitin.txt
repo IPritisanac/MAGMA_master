@@ -10,7 +10,7 @@ read_extracted_NOEs	on
 extracted_NOE_list	Benchmark/ubiquitin/dat/ubiquitin_noes.txt
 check_NOE_reciprocity	on	            
 #	System dependent requirements
-run_subgraph_isomorphism	off
+run_subgraph_isomorphism	on
 priority_iterations	10
 N_priority_MCES	3
 merge_LV_label	off
