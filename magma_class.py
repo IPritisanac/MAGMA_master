@@ -7,7 +7,8 @@ executes methods defined in mces.py
 """
 
 import sys, os, copy
-from mces import MCES_PY # import all methods of the class
+from mces import McGregor	# import all methods of the class
+from mces import MCES_PY
 from data import ParseInput,PDBData,NMRData
 from graph_heuristics import Heuristic
 from subgraph_isomorphism import IgraphSubIso

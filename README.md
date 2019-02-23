@@ -19,18 +19,22 @@ MAGMA can be run using Linux/Unix and Windows.
 For a successful operation of MAGMA, you need to have:
 		
 * GNU Compiler Collection (GCC)
-* python (__version__= '2.7' or higher)
+* python (version 2.7 or higher)
 		
  And the following python packages installed on your system.
  
-* numpy (__version__= '1.8.1' or higher)
-* matplotlib (__version__ = '1.3.1' or higher)
-* igraph (__version__= '0.7.1' or higher)
-* networkx (__version__= '1.8.1' or higher)
-* munkres (__version__= '1.0.7' or higher)
+* numpy (__version__)
+* matplotlib (__version__)
+* igraph (__version__)
+* networkx (__version__)
+* munkres (__version__)
 			
-MAGMA python-version is run from a command line as follows:
- `python execute_magma.py /path/to/input/text/file'
+MAGMA c-version (faster, not supported on Windows) is run from a command line as follows:
+ `python execute_magma.py /path/to/input/text/file c`
+
+MAGMA python-version (slower) is run from a command line as follows:
+ `python execute_magma.py /path/to/input/text/file py`
+
 
 ## MAGMA OUTPUTS
 
@@ -52,7 +56,7 @@ These are less relevant for the user, but useful for the analysis of run progres
 * `conv.2.x.out`, text file monitoring details of the first step of MAGMA optimization prior to execution of complete MCES search. For each step of iterative optimization (column 1) enumerate how many vertices (column 3) have scored a particular score (column 2)
 
 * `conv.1.x.out`. text file monitoring progress of the second step of MAGMA optimization prior to execution of complete MCES search. For each step of iterative optimization (column 1) store the score of collected mces (column 2)
-			
+		
 * `mces_n.txt`, lists all mces solutions found by McGregor algorithm for the nth connected subgraph of the nmr data graph
 
 * `mces_n.txt.B`
