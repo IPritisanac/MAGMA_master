@@ -1,13 +1,13 @@
 #	PDB part
-pdb_file	Benchmark/msrB/pdbs/3e0o.pdb
-chains	A B C D E F
+pdb_file	Benchmark/mbp/pdbs/1ez9.pdb
+chains	A 
 residues ILE VAL LEU 
-short_distance_threshold	10      
+short_distance_threshold	10
 long_distance_threshold	15           
-#	NOE part                             
+#	NOE part                               
 labelled_residues	ILE VAL LEU             
 read_extracted_NOEs	on
-extracted_NOE_list	Benchmark/msrB/dat/msrB_noes.txt
+extracted_NOE_list	Benchmark/mbp/dat/mbp_noes.txt
 check_NOE_reciprocity	on               
 #	System dependent requirements
 run_subgraph_isomorphism	on
@@ -17,9 +17,9 @@ merge_LV_label	off
 merge_proRS	on
 merge_NOEs	on
 min_size	1
-mode	all_subgraphs
-mces_mode	all
+mode	connected_subgraphs
 maximum_run_time	100
+mces_mode	all
 strip_mode on
 #########################
 # NMR data reference:

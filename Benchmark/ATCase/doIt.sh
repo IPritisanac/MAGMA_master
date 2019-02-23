@@ -1,1 +1,0 @@
-python /home/beast/ajbgroup/magma/py/magma.py ./inputATCase_r2dimer.txt

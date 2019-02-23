@@ -37,15 +37,18 @@ if run_mode=='all_subgraphs':
     print "Running MAGMA including all data subgraphs"
     if check_isomorphism and M.subgraph_isomorphism(data_vertices,data_adj,struct_vertices,struct_adj,G,"_all"):
         print "Calculation finished. Clean program exit ..."
-        sys.exit(0)
+        M.analyse_magma_results()
+
     else:       
         print "Subgraph isomorphism not found \nRunning MCES algorithm..."
         runtag = "full"
         assign_options=M.set_assignment_options(data_vertices,data_adj,struct_vertices,struct_adj,G,stripmode,runtag,filter_dict={})
         # update initial data structures according to the results of the optimization runs
         assign_options,data_vertices,data_adj,runtime= M.optimise_run_order(G,assign_options,data_vertices,data_adj,struct_vertices,struct_adj,niter,nitermces,runtime,runtag,version=magma_version,optimise_mode="y")
+
         if magma_version=="c":  # if c version of mcgregor algorithm is employed
             M.run_complete_mcgregor_c(assign_options,data_vertices,data_adj,struct_vertices,struct_adj,runtime,runtag,mcesmode)
+
         if magma_version=="py": # if python version of mcgregor algorithm is employed
             M.run_complete_mcgregor_py(assign_options,data_vertices,data_adj,struct_vertices,struct_adj,runtime,runtag,mcesmode)
     
@@ -82,8 +85,10 @@ elif run_mode=='connected_subgraphs':
             sub_assign_options=M.set_assignment_options(sub_vert,sub_adj,struct_vertices,struct_adj,G,stripmode,runtag,filter_dict={})
             # update initial data structures according to the results of the optimization runs
             sub_assign_options,sub_vert,sub_adj,runtime = M.optimise_run_order(G,sub_assign_options,sub_vert,sub_adj,struct_vertices,struct_adj,niter,nitermces,runtime,runtag,version=magma_version,optimise_mode="y")
+
             if magma_version=="c":
                 M.run_complete_mcgregor_c(sub_assign_options,sub_vert,sub_adj,struct_vertices,struct_adj,runtime,runtag,mcesmode)
+
             if magma_version=="py":
                 M.run_complete_mcgregor_py(sub_assign_options,sub_vert,sub_adj,struct_vertices,struct_adj,runtime,runtag,mcesmode)
     

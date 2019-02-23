@@ -1,0 +1,29 @@
+#	PDB part
+pdb_file	Benchmark/a7a7/pdbs/1yau_single_ring.pdb
+chains	A C D E F G H I J K L M N O
+residues LEU VAL ILE
+short_distance_threshold	10      
+long_distance_threshold	15          
+#	NOE part                             
+labelled_residues	LEU VAL ILE    
+read_extracted_NOEs	on
+extracted_NOE_list	Benchmark/a7a7/dat/a7a7_noes.txt
+check_NOE_reciprocity	on              
+#	System dependent requirements
+run_subgraph_isomorphism	on
+priority_iterations	50
+N_priority_MCES	5
+merge_LV_label	off
+merge_proRS	on
+merge_NOEs	on
+min_size	1
+mode	connected_subgraphs
+maximum_run_time 10000
+mces_mode	all
+strip_mode on
+#########################
+# NMR data reference:
+# Tugarinov, V.; Sprangers, R.; Kay, L. E.
+# Probing side-chain dynamics in the proteasome by relaxation violated coherence transfer NMR spectroscopy.
+# J. Am. Chem. Soc. 2007, 129 (6), 1743-50.
+#########################

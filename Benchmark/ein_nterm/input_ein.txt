@@ -1,0 +1,29 @@
+#	PDB part
+pdb_file	Benchmark/ein_nterm/pdbs/1EZA.pdb
+chains	A
+residues ILE VAL LEU ALA
+short_distance_threshold	10
+long_distance_threshold	15           
+#	NOE part                             
+labelled_residues	ILE VAL LEU ALA
+read_extracted_NOEs	on
+extracted_NOE_list	Benchmark/ein_nterm/dat/ein_noes.txt
+check_NOE_reciprocity	on	               
+#	System dependent requirements
+run_subgraph_isomorphism	on
+priority_iterations	50
+N_priority_MCES	3	
+merge_LV_label	off
+merge_proRS	on
+merge_NOEs	on
+min_size	1
+mode	connected_subgraphs
+maximum_run_time 100
+mces_mode	all
+strip_mode on
+#########################
+# NMR data reference:
+# Venditti, V.; Fawzi, N. L.; Clore, G. M.
+# Automated sequence and stereo-specific assignment of methyl-labeled proteins by paramagnetic relaxation and methyl-methyl nuclear Overhauser enhancement spectroscopy.
+# J. Biomol. NMR 2011, 51 (3), 319-28.
+#########################

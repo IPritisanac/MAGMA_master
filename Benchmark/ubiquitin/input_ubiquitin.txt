@@ -1,0 +1,29 @@
+#	PDB part
+pdb_file	Benchmark/ubiquitin/pdbs/1UBQ.pdb
+chains	A 
+residues ILE VAL LEU 
+short_distance_threshold	6.5
+long_distance_threshold	10 
+#	NOE part                              
+labelled_residues	ILE VAL LEU               
+read_extracted_NOEs	on
+extracted_NOE_list	Benchmark/ubiquitin/dat/ubiquitin_noes.txt
+check_NOE_reciprocity	on	            
+#	System dependent requirements
+run_subgraph_isomorphism	on
+priority_iterations	10
+N_priority_MCES	3
+merge_LV_label	off
+merge_proRS 	on
+merge_NOEs	on
+min_size	1
+mode	all_subgraphs
+mces_mode	all
+maximum_run_time	100
+strip_mode on
+#########################
+# NMR data reference:
+# Chao, F. A.; Shi, L.; Masterson, L. R.; Veglia, G.
+# FLAMEnGO: a fuzzy logic approach for methyl group assignment using NOESY and paramagnetic relaxation enhancement data. 
+# J. Magn. Reson. 2012, 214 (1), 103-10.
+#########################

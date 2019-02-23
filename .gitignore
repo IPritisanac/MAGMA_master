@@ -64,3 +64,5 @@ doc/_templates/
 
 # files generated during testing
 test/params
+/Benchmark
+/debug_dataset
