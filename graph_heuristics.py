@@ -14,7 +14,7 @@ import sys
 import numpy as np
 import munkres
 import igraph as ig
-from munkres import Munkres, print_matrix
+#from munkres import Munkres, print_matrix
 import matplotlib.pyplot as plt
 from subgraph_isomorphism import IgraphSubIso
 
@@ -111,8 +111,8 @@ class Graph(GenericMethods):
     def munkres_maximise_assignment(self,matrix):
     # call to Munkres algorithm (a variant of the Hungarian algorithm)
     # maximise "profit" along rows of a matrix
-        cost_matrix = munkres.make_cost_matrix(matrix,lambda cost: sys.maxint - cost)
-        m = Munkres()
+        cost_matrix = munkres.make_cost_matrix(matrix,lambda cost: float("inf") - cost)
+        m = munkres.Munkres()
         indexes = m.compute(cost_matrix)
         #print_matrix(matrix, msg='Highest profit through this matrix:')
         useful_indices = []
