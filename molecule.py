@@ -27,7 +27,7 @@ class Molecule():
         elif p.ndim==2:
             self.coordinates=np.array([p])
         else:
-            print "ERROR: expected numpy array with 2 or three dimensions, but %s dimensions were found"%p.ndim
+            print("ERROR: expected numpy array with 2 or three dimensions, but %s dimensions were found"%p.ndim)
             return -1
 
         ##index of currently selected conformation.
@@ -60,7 +60,7 @@ class Molecule():
         if str(prop) in self.properties:
             return self.properties[str(prop)]
         else:
-            print "property %s not found!"%prop 
+            print("property %s not found!"%prop)
             return float('nan')
 
     ##select current frame (place frame pointer at desired position)
@@ -71,7 +71,7 @@ class Molecule():
             self.points=self.coordinates[self.current]
             #self.properties['center']=self.get_center()
         else:
-            print "ERROR: position %s requested, but only %s conformations available"%(pos,self.coordinates.shape[0])
+            print("ERROR: position %s requested, but only %s conformations available"%(pos,self.coordinates.shape[0]))
 
     ##create a new property.
     def add_property(self,name,value):
@@ -114,7 +114,7 @@ class Molecule():
                 self.set_current(self.current+1) # set new frame to the first of the newly inserted one
 
         else:
-                print "ERROR: expected numpy array with 2 or three dimensions, but %s dimensions were found"%np.ndim
+                print("ERROR: expected numpy array with 2 or three dimensions, but %s dimensions were found"%np.ndim)
                 return -1    
     
     ##return information from knowledge base
@@ -124,7 +124,7 @@ class Molecule():
         if str(prop) in self.knowledge:
                 return self.knowledge[str(prop)]
         else:
-                print "entry %s not found in knowledge base!"%prop 
+                print("entry %s not found in knowledge base!"%prop)
                 return float('nan')
 
 
@@ -136,8 +136,9 @@ class Molecule():
 
         try:
             f_in=open(pdb,"r")
-        except Exception, e:
-            print "%s"%e
+        except Exception as E:
+            e=E
+            print("%s"%e)
             raise Exception('ERROR: file %s not found!'%pdb)
 
         #store filename
@@ -270,8 +271,8 @@ class Molecule():
                     alternative_xyz=np.array(alternative).astype(float)
                 except:
                     alternative_xyz=np.array([alternative[0]]).astype(float)
-                    print 'WARNING: found %s models, but their atom count differs'%len(alternative)
-                    print 'WARNING: treating only the first model in file %s'%pdb
+                    print('WARNING: found %s models, but their atom count differs'%len(alternative))
+                    print('WARNING: treating only the first model in file %s'%pdb)
                     #raise Exception('ERROR: models appear not to have the same amount of atoms')
 
                 self.add_xyz(alternative_xyz)
@@ -298,10 +299,10 @@ class Molecule():
 
         elif type(chain) is list or type(chain).__module__=='numpy':
             chain_query=self.properties['data'][:,4]==chain[0]
-            for c in xrange(1,len(chain),1):
+            for c in range(1,len(chain),1):
                 chain_query=np.logical_or(chain_query,self.properties['data'][:,4]==chain[c])
         else:
-            print "ERROR: wrong type for chain selection. Should be str, list, or numpy"
+            print("ERROR: wrong type for chain selection. Should be str, list, or numpy")
             return -1
 
 
@@ -321,10 +322,10 @@ class Molecule():
             res_query=self.properties['data'][:,refcolumn]==str(res)
         elif type(res) is list or type(res).__module__=='numpy':
             res_query=self.properties['data'][:,refcolumn]==str(res[0])
-            for r in xrange(1,len(res),1):
+            for r in range(1,len(res),1):
                 res_query=np.logical_or(res_query,self.properties['data'][:,refcolumn]==str(res[r]))   
         else:
-            print "ERROR: wrong type for resid selection. Should be int, list, or numpy"
+            print("ERROR: wrong type for resid selection. Should be int, list, or numpy")
             return -1
 
         #atom name boolean selector
@@ -335,10 +336,10 @@ class Molecule():
                 atom_query=self.properties['data'][:,2]==atom
         elif type(atom) is list or type(atom).__module__=='numpy':
             atom_query=self.properties['data'][:,2]==atom[0]
-            for a in xrange(1,len(atom),1):
+            for a in range(1,len(atom),1):
                 atom_query=np.logical_or(atom_query,self.properties['data'][:,2]==atom[a])   
         else:
-            print "ERROR: wrong type for atom selection. Should be str, list, or numpy"
+            print("ERROR: wrong type for atom selection. Should be str, list, or numpy")
             return -1    
 
         #slice data array and return result (colums 5 to 7 contain xyz coords)
@@ -384,7 +385,7 @@ class Molecule():
     def get_pdb_data(self,index=""):
         
         if index=="":
-                index=xrange(0,len(self.points),1)
+                index=range(0,len(self.points),1)
 
         #create a list containing all infos contained in pdb (point coordinates and properties)
         d=[]
@@ -410,7 +411,7 @@ class Molecule():
                 if np.max(conformations)<len(self.coordinates):
                         frames=conformations
                 else:
-                        print "ERROR: requested coordinate index %s, but only %s are available"%(np.max(conformations), len(self.coordinates))
+                        print("ERROR: requested coordinate index %s, but only %s are available"%(np.max(conformations), len(self.coordinates)))
                         return -1
 
         f_out=open(outname,"w")
@@ -421,7 +422,7 @@ class Molecule():
                 self.set_current(f)
                 d=self.get_pdb_data(index)
 
-                for i in xrange(0,len(d),1):
+                for i in range(0,len(d),1):
                     #create and write PDB line
                     L='%-6s%5s  %-4s%-4s%1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n'%(d[i][0],d[i][1],d[i][2],d[i][3],d[i][4],d[i][5],float(d[i][6]),float(d[i][7]),float(d[i][8]),float(d[i][9]),float(d[i][10]),d[i][11])
                     f_out.write(L)

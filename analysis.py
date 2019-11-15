@@ -21,7 +21,7 @@ def get_score(infile):
     try:
         return val
     except:
-        print 'Could not find val in ',infile
+        print('Could not find val in ',infile)
         sys.exit(100)
 
 
@@ -44,7 +44,7 @@ def add_file(result_dict,infile):
                     result_dict[key].append(val)
     else:    #treat mces  .txt files differently
         lim=get_score(infile)
-        print 'The maximum NOE score is :',lim
+        print('The maximum NOE score is :',lim)
         tot_solutions=0
         n_solutions=0
         results=[]

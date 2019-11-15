@@ -42,27 +42,27 @@ class Parser(object):
                 try:
                     val=self.parameters[w[0]] # get the default parameter of the value
                 except KeyError:
-                    print "unrecognised keyword %s"%w[0]
+                    print("unrecognised keyword %s"%w[0])
                     sys.exit(1)
 
                 #if type is string
                 if val[1].split()[0]=='str': # val[1] = 'str' or 'int'
-                    exec 'self.%s=%s("%s")'%(val[0],val[1],w[1])
+                    exec('self.%s=%s("%s")'%(val[0],val[1],w[1]))
 
                 #if type is int or float
                 elif val[1].split()[0]=='int' or val[1].split()[0]=='float':
-                    exec 'self.%s=%s(%s)'%(val[0],val[1],w[1])
+                    exec('self.%s=%s(%s)'%(val[0],val[1],w[1]))
 
                 #if type is an array of int, float, or str
                 elif val[1].split()[0]=='array' and (val[1].split()[1]=='int' or val[1].split()[1]=='float' or val[1].split()[1]=='str'):
-                    exec 'self.%s=np.array(%s).astype(%s)'%(val[0],w[1:len(w)],val[1].split()[1])
+                    exec('self.%s=np.array(%s).astype(%s)'%(val[0],w[1:len(w)],val[1].split()[1]))
 
                 #if type is dictionary
                 elif val[1].split()[0]=="dictionary":
-                    exec 'self.%s[\"%s\"]=%s'%(val[0],w[1],w[2:])
+                    exec('self.%s[\"%s\"]=%s'%(val[0],w[1],w[2:]))
 
                 else:
-                    print "unrecognised type for keyword %s: %s"%(w[0],val[1])
+                    print("unrecognised type for keyword %s: %s"%(w[0],val[1]))
                     sys.exit(1)
 
             line = f.readline()
@@ -79,7 +79,8 @@ class Parser(object):
     #set default values for all defined keywords Xx Parsing the self paramater and creating a self of all the values xX
     def _set_default_values(self):
 
-        for k,v in self.parameters.iteritems():
-            exec 'self.%s=v[2]'%v[0] # -> this is where the self.style comes fro
+        #for k,v in self.parameters.iteritems():
+        for k,v in self.parameters.items():
+            exec('self.%s=v[2]'%v[0]) # -> this is where the self.style comes fro
     
 

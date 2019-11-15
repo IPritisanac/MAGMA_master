@@ -255,7 +255,7 @@ class PDBData(GenericMethods):
             M.import_pdb(self.input_file)
         except:
             raise Exception('ERROR: file %s not found!'% self.input_file)
-            print 'Exiting program ...'
+            print('Exiting program ...')
             sys.exit(1)
         return M       
         
@@ -267,7 +267,7 @@ class PDBData(GenericMethods):
             return None,None
         
         mol = self.pdb_handle()        
-        print "> protein loaded, loading aminoacids!"
+        print("> protein loaded, loading aminoacids!")
         
         if self.dist_between == "proton":
             all_pos = []
@@ -278,7 +278,7 @@ class PDBData(GenericMethods):
             if self.dist_between == "carbon":
                 pos_ile,idx_ile=mol.atomselect(self.input_chains,"ILE","CD1",use_resname=True, get_index=True)
                 info_ile=mol.properties['data'][idx_ile,2:6]    
-                print ">> isoleucine done!",pos_ile.shape
+                print(">> isoleucine done!",pos_ile.shape)
                 self.all_res_information.setdefault('ILE',(pos_ile,info_ile))
                 
             if self.dist_between == "proton":
@@ -287,14 +287,14 @@ class PDBData(GenericMethods):
                     info = mol.properties['data'][idx,2:6]
                     all_pos.extend(pos)
                     all_info.extend(info)
-                print ">> isoleucine done!", len(all_pos)
+                print(">> isoleucine done!", len(all_pos))
             
         if 'ALA' in self.input_residues:
         #get position, indices and information for alanine atoms
             if self.dist_between == "carbon":
                 pos_ala,idx_ala=mol.atomselect(self.input_chains,"ALA","CB",use_resname=True, get_index=True)
                 info_ala=mol.properties['data'][idx_ala,2:6]
-                print ">> alanine done!",pos_ala.shape
+                print(">> alanine done!",pos_ala.shape)
                 self.all_res_information.setdefault('ALA',(pos_ala,info_ala))
             
             if self.dist_between == "proton":
@@ -303,14 +303,14 @@ class PDBData(GenericMethods):
                     info = mol.properties['data'][idx,2:6]
                     all_pos.extend(pos)
                     all_info.extend(info)
-                print ">> alanine done!", len(all_pos)
+                print(">> alanine done!", len(all_pos))
         
         if 'THR' in self.input_residues:                
             if self.dist_between == "carbon":          
                 #get position, indices and information for threonine atoms
                 pos_thr,idx_thr=mol.atomselect(self.input_chains,"THR","CG2",use_resname=True, get_index=True)
                 info_thr=mol.properties['data'][idx_thr,2:6]
-                print ">> threonine done!"
+                print(">> threonine done!")
                 self.all_res_information.setdefault('THR',(pos_thr,info_thr))
                 
             if self.dist_between == "proton":
@@ -319,14 +319,14 @@ class PDBData(GenericMethods):
                     info = mol.properties['data'][idx,2:6]
                     all_pos.extend(pos)
                     all_info.extend(info)
-                print ">> threonine done!", len(all_pos)
+                print(">> threonine done!", len(all_pos))
                         
         if 'MET' in self.input_residues:               
             #get position, indices and information for methionine atoms
             if self.dist_between == "carbon": 
                 pos_met,idx_met=mol.atomselect(self.input_chains,"MET","CE",use_resname=True, get_index=True)
                 info_met=mol.properties['data'][idx_met,2:6]
-                print ">> methionine done!"
+                print(">> methionine done!")
                 self.all_res_information.setdefault('MET',(pos_met,info_met))
                 
             if self.dist_between == "proton":
@@ -335,7 +335,7 @@ class PDBData(GenericMethods):
                     info = mol.properties['data'][idx,2:6]
                     all_pos.extend(pos)
                     all_info.extend(info)
-                print ">> methionine done!", len(all_pos)
+                print(">> methionine done!", len(all_pos))
         
         if 'VAL' in self.input_residues: 
             #get average position, indices and information for valine atoms
@@ -343,18 +343,18 @@ class PDBData(GenericMethods):
                 if self.merge_proRS:
                     idx_val=mol.atomselect(self.input_chains,"VAL","CA",use_resname=True, get_index=True)[1]
                     info_val=mol.properties['data'][idx_val,2:6]
-                    print ">> merging ProR and ProS carbons to pseudoatom"
+                    print(">> merging ProR and ProS carbons to pseudoatom")
                     pos_val=self.get_average_pos(mol,idx_val,["CG1","CG2"])
-                    print ">> valine done!",pos_val.shape
+                    print(">> valine done!",pos_val.shape)
                     self.all_res_information.setdefault('VAL',(pos_val,info_val))
                 else:
-                    print "Treating each methyl group of Val separately"
+                    print("Treating each methyl group of Val separately")
                     pos_val1,idx_val1=mol.atomselect(self.input_chains,"VAL","CG1",use_resname=True, get_index=True)
                     pos_val2,idx_val2=mol.atomselect(self.input_chains,"VAL","CG2",use_resname=True, get_index=True)
                     info_val1=mol.properties['data'][idx_val1,2:6]
                     info_val2=mol.properties['data'][idx_val2,2:6]
-                    print ">> %s valine methyls found!"%np.concatenate((pos_val1,pos_val2)).shape[0] 
-                    print ">> valine done!"
+                    print(">> %s valine methyls found!"%np.concatenate((pos_val1,pos_val2)).shape[0])
+                    print(">> valine done!")
                     self.all_res_information.setdefault("VAL",(np.concatenate((pos_val1,pos_val2)),np.concatenate((info_val1,info_val2))))
                 
             if self.dist_between == "proton":
@@ -364,29 +364,29 @@ class PDBData(GenericMethods):
                         info = mol.properties['data'][idx,2:6]
                         all_pos.extend(pos)
                         all_info.extend(info)
-                    print ">> valine done!", len(all_pos)
+                    print(">> valine done!", len(all_pos))
                 else:
-                    print "Currently unsupported combination of parameters: distance_type 'proton' and merge_proRS 'off'; Change one of the parameters"
+                    print("Currently unsupported combination of parameters: distance_type 'proton' and merge_proRS 'off'; Change one of the parameters")
                     sys.exit(0)
             
         if 'LEU' in self.input_residues:        
             #get average position, indices and information for leucine atoms
             if self.dist_between == "carbon":
                 if self.merge_proRS:
-                    print "Treating each methyl group of Leu separately"           
+                    print("Treating each methyl group of Leu separately")     
                     idx_leu=mol.atomselect(self.input_chains,"LEU","CA",use_resname=True, get_index=True)[1]
                     info_leu=mol.properties['data'][idx_leu,2:6]
-                    print ">> merging ProR and ProS carbons to pseudoatom"
+                    print(">> merging ProR and ProS carbons to pseudoatom")
                     pos_leu=self.get_average_pos(mol,idx_leu,["CD1","CD2"])
-                    print ">> leucine done!",pos_leu.shape
+                    print(">> leucine done!",pos_leu.shape)
                     self.all_res_information.setdefault('LEU',(pos_leu,info_leu))
                 else:
                     pos_leu1,idx_leu1=mol.atomselect(self.input_chains,"LEU","CD1",use_resname=True, get_index=True)
                     pos_leu2,idx_leu2=mol.atomselect(self.input_chains,"LEU","CD2",use_resname=True, get_index=True)
                     info_leu1=mol.properties['data'][idx_leu1,2:6]
                     info_leu2=mol.properties['data'][idx_leu2,2:6]
-                    print ">> %s leucine methyls found!"%np.concatenate((pos_leu1,pos_leu2)).shape[0]
-                    print ">> leucine done!"        
+                    print(">> %s leucine methyls found!"%np.concatenate((pos_leu1,pos_leu2)).shape[0])
+                    print(">> leucine done!")    
                     self.all_res_information.setdefault("LEU",(np.concatenate((pos_leu1,pos_leu2)),np.concatenate((info_leu1,info_leu2))))
 
             if self.dist_between == "proton":
@@ -396,36 +396,41 @@ class PDBData(GenericMethods):
                         info = mol.properties['data'][idx,2:6]
                         all_pos.extend(pos)
                         all_info.extend(info)
-                    print ">> leucine done!", len(all_pos)
+                    print(">> leucine done!", len(all_pos))
                 else:
-                    print "Currently unsupported combination of parameters: distance_type 'proton' and merge_proRS 'off'; Change one of the parameters"
+                    print("Currently unsupported combination of parameters: distance_type 'proton' and merge_proRS 'off'; Change one of the parameters")
                     sys.exit(0)
                                     
         if (self.dist_between == "carbon") and (len(self.all_res_information.keys()) == 0):
-            print "No residues selected!"
-            print "Check input of residues (>> PDB part of the input file)"
+            print("No residues selected!")
+            print("Check input of residues (>> PDB part of the input file)")
             
         if (self.dist_between == "carbon") and (len(self.all_res_information.keys()) == 1):
-            print "Only 1 residue type methyl labelled >> ", self.all_res_information.keys()
-            residue = self.all_res_information.keys()[0]
+            print("Only 1 residue type methyl labelled >> ", self.all_res_information.keys())
+            residues=list(self.all_res_information.keys())
+            #IP 15th Nov 2019 -- no indexing of keys in python 3.0
+            residue = residues[0]
             all_pos = self.all_res_information[residue][0]
             all_info = self.all_res_information[residue][1]
             
         if (self.dist_between == "carbon") and (len(self.all_res_information.keys()) > 1):
             # initialize numpy arrays of right dimensions
-            first_residue = self.all_res_information.keys()[0] 
+            residues = list(self.all_res_information.keys())
+            #first_residue = self.all_res_information.keys()[0] 
+            first_residue = residues[0]
             all_pos = self.all_res_information[first_residue][0]
             all_info = self.all_res_information[first_residue][1]
             for r in range(len(self.all_res_information.keys())-1):
                 # append the rest
-                res = self.all_res_information.keys()[r+1]
+                #res = self.all_res_information.keys()[r+1]
+                res = residues[r+1]
                 all_pos=np.concatenate((all_pos,self.all_res_information[res][0]))
                 all_info=np.concatenate((all_info,self.all_res_information[res][1]))
         
         if self.ligand:
             #    if atoms from ligand are connected to the protein residues through an NOE;
             #    and these NOEs will be included to the structure graph as edges
-            print "\n>> adding edges from the ligand to the protein\n"
+            print("\n>> adding edges from the ligand to the protein\n")
             for lig_atom in self.lig_atoms:
                 pos_lig,idx_lig=mol.atomselect(str(self.lig_chain),str(self.lig_name),str(lig_atom),use_resname=True,get_index=True)
                 info_lig=mol.properties['data'][idx_lig,2:6] 
@@ -620,7 +625,7 @@ class PDBData(GenericMethods):
             d.append([point1, point2, float(line[3])])
         #print d        
         #plot a pretty matrix
-        print "> preparing matrix plot"
+        print("> preparing matrix plot")
         length=np.arange(0,len(distance_matrix),1)
         [X,Y] =np.meshgrid(length,length)
         
@@ -683,30 +688,30 @@ class NMRData(GenericMethods):
     def set_given_input(self):
                         
         if self.read_extracted_NOEs:
-            print "Reading from a list of extracted NOEs"
+            print("Reading from a list of extracted NOEs")
             noes = self.read_noes()
         else:
-            print "Problem with the input NOE file; check 'read_extracted_NOEs'; the option should be on!"
+            print("Problem with the input NOE file; check 'read_extracted_NOEs'; the option should be on!")
             sys.exit(1)
                         
         if self.check_recip: # and not self.check_intensity:
-            print "Checking for NOE reciprocity"
+            print("Checking for NOE reciprocity")
             #self.check_recip = True
             noes = self.check_noe_reciprocity(noes)
                     
         else:        
-            print "No NOE checking done..." 
+            print("No NOE checking done...")
     
         if self.merge:
             noes = self.merge_intra_lv_noes(noes)
         else:
-            print 'Keeping ProR and ProS methyl groups of LEU/VAL as separate nodes ...'
+            print('Keeping ProR and ProS methyl groups of LEU/VAL as separate nodes ...')
 
         if self.merge_label_LV:
-            print "No discrimination between the Leu / Val residue types ..."
+            print("No discrimination between the Leu / Val residue types ...")
             noes = self.merge_lv_labels(noes)
         else:
-            print "Discriminating between Leu / Val residue types ..."
+            print("Discriminating between Leu / Val residue types ...")
             
         if self.ligand_noes:
             self.lig_noes= self.read_ligand_noes()
@@ -754,7 +759,7 @@ class NMRData(GenericMethods):
     
     def merge_intra_lv_noes(self,noe_dict):
         # given the noes, merge those coming from the same residue but different methyl groups (ProR/ProS)
-        print 'Merging NOEs from ProR/ProS methyl groups of the same Leu/Val residue'
+        print('Merging NOEs from ProR/ProS methyl groups of the same Leu/Val residue')
         merged_noes = {}
         for peak,rnoes in noe_dict.items():
             try:
@@ -808,7 +813,7 @@ class NMRData(GenericMethods):
         recip1 = indx_values[recip_index[0]]    # get the values of NOEs1
         recip2 = indx_values[recip_index[1]]    # get the values of NOEs2 (reciprocals)
         
-        for x in xrange(len(recip1)):
+        for x in range(len(recip1)):
             recip_conn_dict.setdefault(recip1[x],[]).append(recip2[x])
         return recip_conn_dict
 
@@ -832,8 +837,8 @@ class NMRData(GenericMethods):
                 
                 # check if the format of the input noe identifiers is correct
                 if (ID_type1 not in self.methyl_IDs) or (ID_type2 not in self.methyl_IDs):
-                    print "Error in input noe file, unrecognized residue type %s"%(ID_type1)
-                    print "Aborting calculation!"
+                    print("Error in input noe file, unrecognized residue type %s"%(ID_type1))
+                    print("Aborting calculation!")
                     sys.exit(1)
 
                 unfiltered_noes.setdefault(newID_1,[]).append((newID_2,None,None)) 

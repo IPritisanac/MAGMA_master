@@ -83,8 +83,8 @@ class Graph(GenericMethods):
                 for subgraph in subs:
                     remove_nodes.extend(subgraph.nodes())
         
-        print "Removing small graph components (N(nodes)) <= ", minimum
-        print "..."
+        print("Removing small graph components (N(nodes)) <= ", minimum)
+        print("...")
         nodes_adj_dict = {node_list[n1]:set(adjacency_list[n1]) for n1 in range(len(node_list))}
         new_node_list = [node for node in node_list if node not in remove_nodes]
         new_adjacency = [list(nodes_adj_dict[node]) for node in new_node_list] 
@@ -122,7 +122,7 @@ class Graph(GenericMethods):
             total += value
             #print '(%d, %d) -> %d' % (row, column, value)
             useful_indices.append(((row, column)))
-        print 'total score (hungarian) =%d' % total
+        print('total score (hungarian) =%d' % total)
         return total,useful_indices    
     
     def combine_munkres_candidates(self,dictionary_total,dictionary_munkres,quantitative = False):
@@ -173,7 +173,7 @@ class Graph(GenericMethods):
         for index in indices:
             indx_row = index[0]
             indx_column = index[1]
-            print reverse_rows[indx_row],">>",reverse_columns[indx_column]
+            print(reverse_rows[indx_row],">>",reverse_columns[indx_column])
             munkres_candidates.setdefault(reverse_rows[indx_row],reverse_columns[indx_column])
          
         return munkres_candidates    
@@ -402,7 +402,7 @@ class Graph(GenericMethods):
         pattern_dict1 = self.get_patterns(nodes1,adjacency1)   
         pattern_dict2 = self.get_patterns(nodes2,adjacency2)
         if comparison == "Jaccard":
-            print "Comparing vertex similarities given neighborhoods (Jaccard coefficient)... "            
+            print("Comparing vertex similarities given neighborhoods (Jaccard coefficient)... ")            
             for n1 in range(len(sorted(pattern_dict1.keys()))): #,key=lambda x:int(x[:-1])))):
                 for n2 in range(len(sorted(pattern_dict2.keys()))): #,key=lambda x:int(x[:-1])))):
                     # if the vertices are of the same type
@@ -440,10 +440,10 @@ class Graph(GenericMethods):
         #    "every node in G1 must be included in the correspondence"
         #    this method checks if the above requirements are fullfilled
         if len(G1.nodes())<= len(G2.nodes()):
-            print 'Correct graph(s) size!'
+            print('Correct graph(s) size!')
         else:
-            print sorted([n[-1] for n in G1.nodes()])
-            print sorted([n[-1] for n in G2.nodes()])
+            print(sorted([n[-1] for n in G1.nodes()]))
+            print(sorted([n[-1] for n in G2.nodes()]))
             raise Exception("ERROR: |G1| must be <= |G2|!")
                             
     def check_graphs_labels(self,G1,G2):
@@ -457,10 +457,10 @@ class Graph(GenericMethods):
         overlap,set1_rem,set2_rem = self.extract_overlap(label_set1,label_set2)
         
         if len(set1_rem) == 0:
-                print 'Correct labels!'
+                print('Correct labels!')
         else:
-                print "Extra labels in NOE graph >> ", set1_rem
-                print "Extra labels in PDB graph >> ", set2_rem
+                print("Extra labels in NOE graph >> ", set1_rem)
+                print("Extra labels in PDB graph >> ", set2_rem)
                 raise Exception("ERROR: Labels mismatch!")
     
 class Heuristic(Graph):

@@ -7,7 +7,7 @@ executes methods defined in mces.py
 """
 
 import sys, os, copy
-from mces import McGregor	# import all methods of the class
+#from mces import McGregor	# import all methods of the class
 from mces import MCES_PY
 from data import ParseInput,PDBData,NMRData
 from graph_heuristics import Heuristic
@@ -37,14 +37,15 @@ class Magma():
         P=ParseInput()  # create instance of the parser class to parse the input file
         try:
             P.parse(input_file)
-        except Exception, e:
-            print "ERROR: Could not parse input file:\n%s"%e
+        except Exception as E:
+            e=E
+            print("ERROR: Could not parse input file:\n%s"%e)
             sys.exit(1)
         try:
             P.check_variables()
-        except Exception, e:
-            print "ERROR in input variables!\n"
-            print e
+        except Exception as E:
+            e=E
+            print("ERROR in input variables!\n%s"%e)
             sys.exit(1)
             
         return P.mode,P.min_size,P.mces_mode,P.strip_mode,P.prior_iter,P.n_prior_mces,P.max_run_time,P.check_subgraph_iso
@@ -55,21 +56,22 @@ class Magma():
         P=ParseInput()  # create instance of the parser class to parse the input file
         try:
             P.parse(input_file)
-        except Exception, e:
-            print "ERROR: Could not parse input file:\n%s"%e
+        except Exception as E:
+            e=E
+            print("ERROR: Could not parse input file:\n%s"%e)
             sys.exit(1)
         try:
             P.check_variables()
-        except Exception, e:
-            print "ERROR in input variables!\n"
-            print e
+        except Exception as E:
+            e=E
+            print("ERROR in input variables!\n%s"%e)
             sys.exit(1)
         
         try:    #    read in a pdb file and generate appropriate graph (as specified by the input parameters)
             PDB = PDBData(P.pdb_file,P.chains,P.residues,P.distance_type,P.short_distance_threshold,P.long_distance_threshold,P.merge_proRS,P.include_ligand,P.ligand_chain,P.ligand_name,P.ligand_atoms)
-        except Exception, e:
-            print "Error when creating instance of the class PDBData"
-            print e
+        except Exception as E:
+            e=E
+            print("Error when creating instance of the class PDBData %s"%e)
             sys.exit(1)        
         try: #    read in NMR files and generate appropriate graph (as specified by the input parameters)
             if P.include_ligand:
@@ -77,9 +79,9 @@ class Magma():
             else:
                 NMR = NMRData(P.labelled_residues,P.read_extracted_NOEs,P.extracted_NOE_list,"",P.check_NOE_reciprocity,P.merge_NOEs,P.merge_LV_label)
 
-        except Exception, e:
-            print "Error when creating instance of the class NMRData"
-            print e
+        except Exception as E:
+            e=E
+            print("Error when creating instance of the class NMRData %s"%e)
             sys.exit(1)
         ###
         positions,extended_info,info = PDB.extract_positions_indices(P.pdb_flag)
@@ -90,15 +92,15 @@ class Magma():
         pdb_dict_long = PDB.get_connection_dict(dist_table_long,info_long,False)
         
         if P.include_ligand:
-            print "Adding ligand connections to the protein structure graph!"
+            print("Adding ligand connections to the protein structure graph!")
             lig_dist_table,lig_info,lig_dist_matrix,lig_dist_mask=PDB.ligand_interaction_network(positions,extended_info,P.ligand_distance_threshold)
                 
         if P.merge_LV_label:
-            print "Leucine and Valine labels are not known\nMerging..."
+            print("Leucine and Valine labels are not known\nMerging...")
             pdb_dict_short = PDB.turn_val_to_leu(pdb_dict_short)
             pdb_dict_long = PDB.turn_val_to_leu(pdb_dict_long)
         else:
-            print "Leucines and Valines labels are known!"       
+            print("Leucines and Valines labels are known!")   
         
         if P.include_ligand:
             pdb_dict_lig = PDB.get_connection_dict(lig_dist_table,lig_info,True)
@@ -128,9 +130,10 @@ class Magma():
         try:
             # //TO DO//this bugs occasionally! check!!
             data_vertices,data_adjacency = Gp.remove_small_subgraphs(data_vertices,data_adjacency,min_size)
-        except Exception,e:
-            print "Error in method remove_small_subgraphs (class Graph)%s"%(e)
-            print "Proceeding without removal"
+        except Exception as E:
+            e=E
+            print("Error in method remove_small_subgraphs (class Graph)%s"%(e))
+            print("Proceeding without removal")
             #sys.exit(1)
             
         # basic graphs checks
@@ -139,14 +142,15 @@ class Magma():
         
         Gp.check_graphs_size(small_graph,big_graph)
         Gp.check_graphs_labels(small_graph,big_graph)
-        print "Basic NOE graph analysis:\n"
-        print "N (nodes, NOE graph) = ",len(small_graph.nodes())
-        print "N (edges, NOE graph) = ",len(small_graph.edges())
-        print "N (nodes, PDB graph) = ", len(big_graph.nodes())
-        print "N (edge, PDB graph) = ", len(big_graph.edges())
-        print "NOE sparsity >> ", len(small_graph.edges())/float(len(big_graph.edges()))
-        print "average degree >> ",np.mean(nx.degree(small_graph).values())
-        print "median degree >>",np.median(nx.degree(small_graph).values())
+        print("Basic NOE graph analysis:\n")
+        print("N (nodes, NOE graph) = ",len(small_graph.nodes()))
+        print("N (edges, NOE graph) = ",len(small_graph.edges()))
+        print("N (nodes, PDB graph) = ", len(big_graph.nodes()))
+        print("N (edge, PDB graph) = ", len(big_graph.edges()))
+        print("NOE sparsity >> ", len(small_graph.edges())/float(len(big_graph.edges())))
+        # py3.0 degree now returns DegreeView object -- doesn't support the below
+        #print("average degree >> ",np.mean(nx.degree(small_graph)))
+        #print("median degree >>",np.median(nx.degree(small_graph)))
         
         return data_vertices,data_adjacency,struct_vertices,struct_adjacency
     
@@ -158,12 +162,12 @@ class Magma():
         start_vf2 = time.time() # measure how long it takes for subgraph isomorphism to be evaluated
         if EP.igraph_subisomorphism(graph_noe,graph_structure):
             n_solutions = EP.igraph_count_subisomorphism(graph_noe,graph_structure)
-            print "Found >> ", n_solutions, "SI solutions!"
+            print("Found >> ", n_solutions, "SI solutions!")
             all_results = EP.igraph_list_subisomorphism(graph_noe,graph_structure,graph_noe_indexing,graph_structure_indexing,[],[],noe_vertices,[],structure_vertices,[],[],False)
             labels_result_dict=EP.igraph_subisomorphism_write_result(self.outdir+os.sep+"vf2",str(tag),all_results,graph_noe_indexing,graph_structure_indexing)
             #print "SI condition met for the entire NOE graph!\nN (explained NOEs) = ",len(small_graph.edges())
             end_vf2 = time.time()-start_vf2
-            print "Took >> ", end_vf2, " sec to evaluate all subgraph isomorphisms"       
+            print("Took >> ", end_vf2, " sec to evaluate all subgraph isomorphisms") 
             return True
         else:
             return False    # subgraph isomorphism not detected
@@ -186,7 +190,7 @@ class Magma():
         candidates_dict = Gp.combine_munkres_candidates(candidates_dict,munkres_candidates,False) 
         ##
         if strip_mode=='on' and len(filter_dict.keys())>0:   # execute only if the filter is non-empty
-            print "Running with strip mode -- reducing assignment options to filter"
+            print("Running with strip mode -- reducing assignment options to filter")
             candidates_dict = H.update_dict(candidates_dict,filter)
 
         return candidates_dict
@@ -239,7 +243,7 @@ class Magma():
                                          
             try:
                 best_start_vertex = random.choice(vertex_scores[max(vertex_scores.keys())])    # choose randomly from a pool of the best scoring vertices
-                print "Started the mapping search from >> ",best_start_vertex
+                print("Started the mapping search from >> ",best_start_vertex)
                 sys.stdout.flush()
                 
                 if version=="py":
@@ -248,7 +252,7 @@ class Magma():
             
             except ValueError:    #except empty vertex_scores dictionary (i.e. if the first step of the optimization did not generate any mces -- start the search first vertex)
                 best_start_vertex = 0
-                print "Started the mapping search from >> ",best_start_vertex
+                print("Started the mapping search from >> ",best_start_vertex)
                 sys.stdout.flush()
                 ##         
                 shuffled_noe_vertices = Gp.optimal_graph_order_from_node(noe_vertices[0],noe_vertices,noe_adjacency)
@@ -281,14 +285,14 @@ class Magma():
             fout1.write("%i\t%i\n"%(tot_n_iter,iter_score)) # write out optimization step (col1) and score of collected mces (col2)
             fout1.close()
             
-            print "In iteration ",tot_n_iter,"scored >> ", iter_score
+            print("In iteration ",tot_n_iter,"scored >> ", iter_score)
             if (iter_score!=0) and (len(vertex_lists.keys())!=0):
                 final_lists[iter_score]=(candidates_dict,vertex_lists[best_start_vertex],vertex_adjacencies[best_start_vertex])
             elif (iter_score!=0) and (len(vertex_lists.keys())==0):
                 #// This condition unnecessary// 'full' mode always applies
                 final_lists[iter_score]=(candidates_dict,shuffled_noe_vertices,shuffled_noe_adjacency)
             elif iter_score==0:
-                print "Iteration led to no MCES "
+                print("Iteration led to no MCES ")
                 #sys.exit(1)
 
             # after iterating over each starting vertex possibility, reorder candidates_dict according to the best_results   
@@ -299,7 +303,7 @@ class Magma():
         #self.write_out_gnu(tag)
         
         if not bool(final_lists): # if final_lists dictionary is empty -- iterations did not lead to MCES -- error somewhere
-            print 'No solutions found in any of the optimization runs! An error in settings or input data. Aborting.'
+            print('No solutions found in any of the optimization runs! An error in settings or input data. Aborting.')
             #return candidates_dict,shuffled_noe_vertices,shuffled_noe_adjacency,start_time
             sys.exit(1)
         
@@ -327,18 +331,18 @@ class Magma():
         outfile=self.outdir+os.sep+"mces_"+str(tag)+"_py.txt"
                 
         if mces_mode == "one":
-            print "\nstarting exact search for a MCES...\n"            
+            print("\nstarting exact search for a MCES...\n")           
             iter_score,best_results = MC.mcgregor_main(outfile,False,None,False,None,False)
             time_took = time.time() - time_elapsed
-            print 'Took >> ', time_took, " to find 1 MCES"
+            print('Took >> ', time_took, " to find 1 MCES")
             
         elif mces_mode == "all":
-            print "\nstarting exact search for all MCES...\n"
+            print("\nstarting exact search for all MCES...\n")
             iter_score,best_results = MC.mcgregor_main(outfile,True,None,False,None,False)
             time_took = time.time() - time_elapsed
-            print 'Took >> ', time_took, " to find all MCES"
+            print('Took >> ', time_took, " to find all MCES")
         else:   # potentially unnecessary - checked by Parser
-            print "Unrecognized mcesmode in mcgregor_main!"
+            print("Unrecognized mcesmode in mcgregor_main!")
             sys.exit(1)
          
                     
@@ -382,6 +386,6 @@ class Magma():
     def analyse_magma_results(self):        
         
         outfile=self.outdir+os.sep+"combined_result.res"
-        print 'Writing combined results to: ',outfile
+        print('Writing combined results to: ',outfile)
         result_dict=analysis.analyse_all(self.outdir)
         analysis.write_result_dict(result_dict,outfile)

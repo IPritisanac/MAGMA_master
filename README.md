@@ -30,10 +30,10 @@ For a successful operation of MAGMA, you need to have:
 * munkres (__version__)
 			
 MAGMA c-version (faster, not supported on Windows) is run from a command line as follows:
- `python execute_magma.py /path/to/input/text/file c`
+ `python magma.py /path/to/input/text/file c`
 
 MAGMA python-version (slower) is run from a command line as follows:
- `python execute_magma.py /path/to/input/text/file py`
+ `python magma.py /path/to/input/text/file py`
 
 
 ## MAGMA OUTPUTS

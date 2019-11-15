@@ -137,7 +137,7 @@ class MCES_PY(GenericMethods):   # IP python version
                     sort=sorted(pattern)   #sorting allows for pattern comparison between graphs
                 neighbourhood.setdefault(nodes[i],tuple(sort))
             else:
-                print 'No pattern for ', i
+                print('No pattern for %s'%i)
                 neighbourhood.setdefault(nodes[i],tuple())
         return neighbourhood
     
@@ -266,11 +266,11 @@ class MCES_PY(GenericMethods):   # IP python version
     def re_prioritize(self,assigned,init_matchingoptions):
         
         if not bool(assigned):  # if the entering assigned dictionary is empty
-            print "An empty assignment dictionary entered in re_prioritize assigned; returning the original dictionary of assignment options"
+            print("An empty assignment dictionary entered in re_prioritize assigned; returning the original dictionary of assignment options")
             return init_matchingoptions # return the original candidate matching options
 
         elif len(assigned.keys())!=len(init_matchingoptions.keys()): # if the entering dictionary does not have an assignment option for all vertices
-            print "The assignment dictionary entering in re_prioritize does not match the original; returning the original dictionary of assignment options"
+            print("The assignment dictionary entering in re_prioritize does not match the original; returning the original dictionary of assignment options")
             return init_matchingoptions
         else:
             try:
@@ -284,7 +284,7 @@ class MCES_PY(GenericMethods):   # IP python version
                     #print key,':',value
                 return new_priorities
             except ValueError:  # in case keys of the two dictionaries don't match
-                print "re_prioritize caught ValueError, returning the original dictionary of assignment options"
+                print("re_prioritize caught ValueError, returning the original dictionary of assignment options")
                 return init_matchingoptions                 
       
     def collect_best_assignments(self,current_solution):
@@ -383,7 +383,7 @@ class MCES_PY(GenericMethods):   # IP python version
                 #print 'Edgesleft ', self.edgesleft
             # Iva - 20/12/2016 -- added the condition len(self.allowedG2nodes)==0
             if (self.G1node==-1) and (len(self.allowedG2nodes)==0):
-                print "found final MCES of size >> ",self.edgesleft," in iter >> ",iter_cnt
+                print("found final MCES of size >> ",self.edgesleft," in iter >> ",iter_cnt)
                 break
         self.output.close()
         final_assign_solutions = self.get_final_assignments()
