@@ -12,7 +12,7 @@ from graph_heuristics import Graph
 try:
     filename = sys.argv[1]
 except:
-    print "ERROR: expecting input file name as the first command line argument"
+    print("ERROR: expecting input file name as the first command line argument")
     sys.exit(2)
 
 if len(sys.argv)==3:
@@ -21,10 +21,10 @@ else:
     magma_version = "c" # default will be c version
 
 if magma_version != "c" and magma_version != "py":
-    print 'ERROR: MAGMA version should be either "c" or "py"'
+    print('ERROR: MAGMA version should be either "c" or "py"')
     sys.exit()
 else:
-    print "Running MAGMA version %s"%magma_version
+    print("Running MAGMA version %s"%magma_version)
 
 M = Magma(filename) # make an instance of Magma class
 run_mode,minsize,mcesmode,stripmode,niter,nitermces,runtime,check_isomorphism = M.parse_variables(filename) # run parser to get variables
@@ -34,13 +34,13 @@ G = Graph(labels,labels,'type',ligand)  # on the basis of the input parameters i
 data_vertices,data_adj,struct_vertices,struct_adj=M.check_graphs(data_vertices,data_adj,struct_vertices,struct_adj,G,minsize)
 
 if run_mode=='all_subgraphs':
-    print "Running MAGMA including all data subgraphs"
+    print("Running MAGMA including all data subgraphs")
     if check_isomorphism and M.subgraph_isomorphism(data_vertices,data_adj,struct_vertices,struct_adj,G,"_all"):
-        print "Calculation finished. Clean program exit ..."
+        print("Calculation finished. Clean program exit ...")
         M.analyse_magma_results()
 
     else:       
-        print "Subgraph isomorphism not found \nRunning MCES algorithm..."
+        print("Subgraph isomorphism not found \nRunning MCES algorithm...")
         runtag = "full"
         assign_options=M.set_assignment_options(data_vertices,data_adj,struct_vertices,struct_adj,G,stripmode,runtag,filter_dict={})
         # update initial data structures according to the results of the optimization runs
@@ -52,13 +52,13 @@ if run_mode=='all_subgraphs':
         if magma_version=="py": # if python version of mcgregor algorithm is employed
             M.run_complete_mcgregor_py(assign_options,data_vertices,data_adj,struct_vertices,struct_adj,runtime,runtag,mcesmode)
     
-    print "Calculation finished. Clean program exit ..."
+    print("Calculation finished. Clean program exit ...")
     M.analyse_magma_results()
     sys.exit(0)
         
 elif run_mode=='connected_subgraphs':
     
-    print "Running MAGMA in the split subgraphs mode"
+    print("Running MAGMA in the split subgraphs mode")
     non_isomorphic=[]
     non_isomorphic_id=[]
 
@@ -68,14 +68,14 @@ elif run_mode=='connected_subgraphs':
         subgraph_tag+=1
         subgraph_vert,subgraph_adj = M.get_subgraph_data(subgraph,G)
         if check_isomorphism and M.subgraph_isomorphism(subgraph_vert,subgraph_adj,struct_vertices,struct_adj,G,str(subgraph_tag)):
-            print "Assigned ", str(subgraph_tag), " with VF2 algorithm"
+            print("Assigned ", str(subgraph_tag), " with VF2 algorithm")
         else:
-            print "At short distance threshold, ", str(subgraph_tag)," data subgraph is not isomorphic to any structure subgraph"
+            print("At short distance threshold, ", str(subgraph_tag)," data subgraph is not isomorphic to any structure subgraph")
             non_isomorphic.append(subgraph) # collect subgraphs that could not be evaulated with VF2 for mces evaluation
             non_isomorphic_id.append(subgraph_tag)  # collect ids of subgraphs that could not be evaluated
     
     if len(non_isomorphic)>0:   # if there are any subgraphs left that need MCES evaluation
-        print "Non subgraph isomorphic = ",len(non_isomorphic)
+        print("Non subgraph isomorphic = ",len(non_isomorphic))
         for stag,left_subgraph in enumerate(non_isomorphic):
             runtag = str(stag)
             sub_vert,sub_adj = M.get_subgraph_data(left_subgraph,G)
@@ -92,11 +92,11 @@ elif run_mode=='connected_subgraphs':
             if magma_version=="py":
                 M.run_complete_mcgregor_py(sub_assign_options,sub_vert,sub_adj,struct_vertices,struct_adj,runtime,runtag,mcesmode)
     
-    print "Exiting magma split!"
-    print "Calculation finished. Clean program exit ..."
+    print("Exiting magma split!")
+    print("Calculation finished. Clean program exit ...")
     M.analyse_magma_results()
     sys.exit(0)
 else:
-    print "ERROR: unknown run mode found in the input file %s\t%s"%(run_mode,filename)
-    print "Exiting program ..."
+    print("ERROR: unknown run mode found in the input file %s\t%s"%(run_mode,filename))
+    print("Exiting program ...")
     sys.exit(1)
